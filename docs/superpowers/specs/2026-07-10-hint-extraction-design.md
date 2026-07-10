@@ -59,22 +59,26 @@ SVG/MathML vocabularies, publishing to PyPI, and a mypy compatibility gate.
 
 ```
 src/hint/
-    __init__.py     # core: RawHtml, Element, ElementOrStr, element, Node, all tag constructors,
-                    #       style, render, render_html; re-exports markdown from _markdown
-    _markdown.py    # optional-dependency binding + markdown()
-    py.typed        # marks the package as typed (PEP 561)
-tests/
-    test_render.py
-    test_elements.py
-    test_markdown.py
+    __init__.py       # core: RawHtml, Element, ElementOrStr, element, Node, all tag constructors,
+                      #       style, render, render_html; re-exports markdown from _markdown
+    _markdown.py      # optional-dependency binding + markdown()
+    py.typed          # marks the package as typed (PEP 561)
+    render_test.py    # tests colocated with source, house-style *_test.py under src/
+    element_test.py
+    markdown_test.py
 docs/superpowers/specs/2026-07-10-hint-extraction-design.md
 README.md
 BACKLOG.md
-pyproject.toml
-.importlinter          # or [tool.importlinter] in pyproject
+pyproject.toml         # setuptools backend; [tool.ruff|pyright|pytest|importlinter] all live here
+uv.lock
+.python-version        # 3.14
+Makefile               # check / lint / format / typecheck / imports / test (house style)
 .github/workflows/ci.yml
 .github/workflows/release-please.yml
 ```
+
+Tests are colocated with source as `src/hint/*_test.py` with `testpaths = ["src"]`, matching house
+style, rather than a separate top-level `tests/` directory.
 
 Two modules rather than one so `import-linter` has a real invariant to guard: the core stays
 dependency-free and `markdown_it` may be imported **only** from `hint._markdown`. Cheap now; load-bearing
@@ -171,7 +175,9 @@ This is deliberately unlike the per-call optional-dependency check that made `du
 
 - **Python floor: 3.14.** Personal project targeting the latest runtime; enables PEP 695 `type` aliases.
 - **uv** for dependency management; `uv sync --locked` in CI (fail on lock drift).
-- **hatchling** build backend, `src/` layout, `py.typed` shipped.
+- **setuptools** build backend (`setuptools>=77` for SPDX `license`), `src/` layout, `py.typed` shipped —
+  matches house style across the existing projects. Dev tooling lives in `[dependency-groups].dev` (PEP 735);
+  the user-facing `markdown` extra lives in `[project.optional-dependencies]`.
 - **ruff** — lint **and** format, `select = ["ALL"]`. Rule conflicts resolved per-site with `# noqa: RULE`;
   a rule disabled globally (in config) only with a rationale comment. The one file-scoped exception is
   `# ruff: noqa: A001` atop `__init__.py` (builtin-shadowing tag names — see Element vocabulary).
