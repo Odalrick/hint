@@ -25,7 +25,10 @@ def _select_renderer() -> Callable[[str], ElementOrStr]:
     except ImportError:
         return _render_as_pre
 
-    parser = MarkdownIt("commonmark", {"breaks": True, "html": True}).enable("table")
+    # html=False escapes raw HTML embedded in the markdown *input*, so untrusted
+    # markdown cannot inject markup. markdown_it also validates link schemes by
+    # default (blocking javascript:/vbscript:). Output is safe, hence RawHtml.
+    parser = MarkdownIt("commonmark", {"breaks": True, "html": False}).enable("table")
 
     def render_markdown(text: str) -> RawHtml:
         return RawHtml(parser.render(text))

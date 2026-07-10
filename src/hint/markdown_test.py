@@ -22,6 +22,13 @@ def test_markdown_output_nests_and_renders() -> None:
     assert "<em>hi</em>" in render(div([markdown("*hi*")], {}))
 
 
+def test_markdown_escapes_raw_html_in_untrusted_input() -> None:
+    result = markdown("<script>alert(1)</script>")
+    assert isinstance(result, RawHtml)
+    assert "<script>" not in result.content
+    assert "&lt;script&gt;" in result.content
+
+
 def test_pre_fallback_escapes_its_text() -> None:
     assert render(_render_as_pre("a < b & c")) == "<pre>a &lt; b &amp; c</pre>"
 
