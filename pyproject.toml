@@ -1,0 +1,89 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hint-html"
+version = "0.0.0" # managed by release-please
+description = "Build HTML as a tree of description values and render it once. hint is not templating."
+readme = "README.md"
+requires-python = ">=3.14"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Ulrik Långström" }]
+keywords = ["html", "rendering", "server-rendered", "templating-alternative"]
+dependencies = []
+
+[project.optional-dependencies]
+markdown = ["markdown-it-py>=3"]
+
+[project.urls]
+Repository = "https://github.com/Odalrick/hint"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.14.9",
+    "pyright>=1.1.390",
+    "pytest>=9.0.2",
+    "hypothesis>=6.0",
+    "import-linter>=2.1",
+]
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+hint = ["py.typed"]
+
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    # Owned by the ruff formatter — enabling these fights `ruff format`.
+    "COM812",
+    "ISC001",
+    # Mutually-exclusive docstring rule pairs; pick one of each so `ALL` is consistent.
+    "D203",   # keep D211 (no blank line before class docstring)
+    "D213",   # keep D212 (summary on the first line)
+    # This is a personal project; per-file copyright headers earn nothing here.
+    "CPY001",
+]
+
+[tool.ruff.lint.isort]
+force-sort-within-sections = true
+combine-as-imports = true
+known-first-party = ["hint"]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests: asserts are the point; docstrings and __init__ boilerplate are noise.
+"**/*_test.py" = ["S101", "D100", "D103", "INP001"]
+
+[tool.pyright]
+include = ["src"]
+pythonVersion = "3.14"
+typeCheckingMode = "strict"
+
+[tool.pytest.ini_options]
+testpaths = ["src"]
+
+[tool.importlinter]
+root_package = "hint"
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "Core stays free of web frameworks and template engines"
+type = "forbidden"
+source_modules = ["hint"]
+forbidden_modules = [
+    "fastapi",
+    "starlette",
+    "flask",
+    "django",
+    "jinja2",
+    "pydantic",
+]
