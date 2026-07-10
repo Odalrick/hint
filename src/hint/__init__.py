@@ -247,3 +247,8 @@ def render_html(root: Element) -> str:
         message = "render_html requires an <html> root element"
         raise ValueError(message)
     return f"<!DOCTYPE html>\n{render(root)}"
+
+
+# Re-exported so `hint.markdown` works. Imported last, deliberately: hint._markdown
+# depends on the element machinery above, so it can only resolve once that is in place.
+from hint._markdown import markdown as markdown  # noqa: E402
