@@ -59,12 +59,15 @@ SVG/MathML vocabularies, publishing to PyPI, and a mypy compatibility gate.
 
 ```
 src/hint/
-    __init__.py       # core: RawHtml, Element, ElementOrStr, element, Node, all tag constructors,
-                      #       style, render, render_html; re-exports markdown from _markdown
+    __init__.py       # re-export boundary: re-exports from _core + markdown from _markdown,
+                      #       then the tag constructors (one thin `tag: Node = element("tag")` line each)
+    _core.py          # implementation: RawHtml, Element, ElementOrStr, element, Node, style,
+                      #       the void-element set, render, render_html
     _markdown.py      # optional-dependency binding + markdown()
     py.typed          # marks the package as typed (PEP 561)
     render_test.py    # tests colocated with source, house-style *_test.py under src/
     element_test.py
+    tag_test.py
     markdown_test.py
 docs/superpowers/specs/2026-07-10-hint-extraction-design.md
 README.md
@@ -80,11 +83,14 @@ Makefile               # check / lint / format / typecheck / imports / test (hou
 Tests are colocated with source as `src/hint/*_test.py` with `testpaths = ["src"]`, matching house
 style, rather than a separate top-level `tests/` directory.
 
-Two modules rather than one so `import-linter` has a real invariant to guard: the core stays
-dependency-free and `markdown_it` may be imported **only** from `hint._markdown`. Cheap now; load-bearing
-as streaming and future extractions arrive.
+**`__init__.py` is a re-export boundary** (per the add-comply rule: an `__init__` re-exports *or* holds
+code, never both — the thin `tag: Node = element("tag")` lines count as re-exports). The implementation
+lives in `hint._core`; `hint._markdown` imports from `hint._core`, so the package `__init__` imports both
+at the top with no circular dependency and no bottom-import escape hatch. `import-linter` guards two
+invariants: the core imports no web framework or template engine, and `markdown_it` may be imported **only**
+from `hint._markdown`. Load-bearing as streaming and future extractions arrive.
 
-### Core (`hint/__init__.py`)
+### Core (`hint/_core.py`)
 
 Unchanged in shape from the canonical dataclass version:
 

@@ -13,52 +13,20 @@ a new one in a single line — ``figure: Node = element("figure")`` — with no 
 no registry. Obsolete elements and the SVG/MathML vocabularies are out of scope.
 """
 
-from collections.abc import Callable
-from dataclasses import dataclass, field
-from html import escape
-
-
-@dataclass
-class RawHtml:
-    """Pre-rendered HTML that :func:`render` emits verbatim, without escaping."""
-
-    content: str
-
-
-type ElementOrStr = Element | str | RawHtml
-
-
-def _no_children() -> list[ElementOrStr]:
-    return []
-
-
-def _no_attrs() -> dict[str, str]:
-    return {}
-
-
-@dataclass
-class Element:
-    """A description of an HTML element: tag name, children, and attributes."""
-
-    name: str
-    content: list[ElementOrStr] = field(default_factory=_no_children)
-    attrs: dict[str, str] = field(default_factory=_no_attrs)
-
-
-type Node = Callable[[list[ElementOrStr], dict[str, str]], Element]
-
-
-def element(name: str) -> Node:
-    """Return a constructor for ``name`` elements: ``element("div")([...], {...})``."""
-
-    def construct(content: list[ElementOrStr], attrs: dict[str, str]) -> Element:
-        return Element(name=name, content=content, attrs=attrs)
-
-    return construct
-
+from hint._core import (
+    Element as Element,
+    ElementOrStr as ElementOrStr,
+    Node as Node,
+    RawHtml as RawHtml,
+    element as element,
+    render as render,
+    render_html as render_html,
+    style as style,
+)
+from hint._markdown import markdown as markdown
 
 # The HTML Living Standard element vocabulary, one constructor per tag, by category.
-# `<style>` is intentionally absent — use the `style()` helper below, which emits its
+# `<style>` is intentionally absent — use the `style` re-export above, which emits its
 # content verbatim. `<del>` is exported as `del_` because `del` is a Python keyword.
 
 # Main root
@@ -199,56 +167,3 @@ summary: Node = element("summary")
 # Web components
 slot: Node = element("slot")
 template: Node = element("template")
-
-
-def style(content: str) -> Element:
-    """Wrap CSS in a ``<style>`` element, emitting it verbatim (not escaped)."""
-    return Element(name="style", content=[RawHtml(content)], attrs={})
-
-
-# The HTML Living Standard void elements — they never have children or a closing tag.
-_VOID_ELEMENTS = frozenset(
-    {
-        "area",
-        "base",
-        "br",
-        "col",
-        "embed",
-        "hr",
-        "img",
-        "input",
-        "link",
-        "meta",
-        "source",
-        "track",
-        "wbr",
-    },
-)
-
-
-def render(node: ElementOrStr) -> str:
-    """Render a description tree to an HTML string, escaping text and attributes."""
-    if isinstance(node, RawHtml):
-        return node.content
-    if isinstance(node, str):
-        return escape(node)
-    attributes = "".join(
-        f' {name}="{escape(value, quote=True)}"' for name, value in node.attrs.items()
-    )
-    if node.name in _VOID_ELEMENTS:
-        return f"<{node.name}{attributes}/>"
-    children = "".join(render(child) for child in node.content)
-    return f"<{node.name}{attributes}>{children}</{node.name}>"
-
-
-def render_html(root: Element) -> str:
-    """Render a full ``<html>`` document with the doctype line prepended."""
-    if root.name != "html":
-        message = "render_html requires an <html> root element"
-        raise ValueError(message)
-    return f"<!DOCTYPE html>\n{render(root)}"
-
-
-# Re-exported so `hint.markdown` works. Imported last, deliberately: hint._markdown
-# depends on the element machinery above, so it can only resolve once that is in place.
-from hint._markdown import markdown as markdown  # noqa: E402
