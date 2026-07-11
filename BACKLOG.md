@@ -42,9 +42,3 @@ the HTML vocabulary.
 Publish the package (the name is reserved-in-intent). At that point also add a **mypy
 compatibility gate** to CI: pyright is the day-to-day checker, but many consumers type-check with
 mypy, and pyright-clean is not always mypy-clean.
-
-## Remove the release-please `release-as` pin
-
-Housekeeping: `release-please-config.json` forces the first release to `1.0.0` via
-`"release-as": "1.0.0"`. Once the 1.0.0 release PR merges, remove that key so subsequent releases
-bump automatically from conventional commits.
