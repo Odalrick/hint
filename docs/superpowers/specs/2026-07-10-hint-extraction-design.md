@@ -23,9 +23,15 @@ The canonical, best-behaved version is the dataclass implementation in `easel-pr
 text content (an XSS hole the dataclass rewrite fixed); it is not the base.
 
 The calling convention `tag([children], {attrs})` — both arguments positional and required, empty cases
-spelled `div([], {})` — is **deliberate and stays unchanged**. It is exact, uniform, and abuses no
-conventions. This is documented as load-bearing in `~/Config/claude/html-rendering-pattern.md` §3.1 and
-is treated here as a fixed constraint, not a design variable.
+spelled `div([], {})` — is **deliberate and stays unchanged** for elements that can have children. It is
+exact, uniform, and abuses no conventions. This is documented as load-bearing in
+`~/Config/claude/html-rendering-pattern.md` §3.1 and is treated here as a fixed constraint.
+
+**Void elements are the one principled exception** (added after review): a void element (`br`, `img`,
+`input`, …) has no children in HTML, so its constructor takes **attrs only** — `br({})`, built by an
+internal `void_element` factory typed `VoidNode = Callable[[dict[str, str]], Element]`. This makes an
+illegal state unrepresentable: passing children to a void element is a type error, not a silent drop. The
+uniformity cost is deliberate and small — void elements are a fixed, known set with no children to give.
 
 The motivating reason to promote this from copied-code to a real library is a **1.1.0 streaming-response
 feature** (see BACKLOG). 1.0.0 is a pure extraction plus CI; it must not foreclose streaming.

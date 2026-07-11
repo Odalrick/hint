@@ -40,12 +40,6 @@ def test_void_element_self_closes() -> None:
     assert render(element("img")([], {"src": "/x.png"})) == '<img src="/x.png"/>'
 
 
-def test_void_element_drops_any_children() -> None:
-    # Deliberate for 1.0.0: void elements share the uniform (content, attrs) signature
-    # but have no children slot, so content passed to one is dropped (see _core.render).
-    assert render(element("br")(["dropped"], {})) == "<br/>"
-
-
 def test_attribute_names_are_escaped() -> None:
     assert render(element("a")([], {'x"y': "v"})) == '<a x&quot;y="v"></a>'
 

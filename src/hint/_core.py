@@ -37,6 +37,7 @@ class Element:
 
 
 type Node = Callable[[list[ElementOrStr], dict[str, str]], Element]
+type VoidNode = Callable[[dict[str, str]], Element]
 
 
 def element(name: str) -> Node:
@@ -44,6 +45,20 @@ def element(name: str) -> Node:
 
     def construct(content: list[ElementOrStr], attrs: dict[str, str]) -> Element:
         return Element(name=name, content=content, attrs=attrs)
+
+    return construct
+
+
+def void_element(name: str) -> VoidNode:
+    """Return a constructor for a void ``name`` element: ``void_element("br")({...})``.
+
+    Void elements have no children in HTML, so the constructor takes attributes only —
+    there is no content parameter to pass (and none to silently drop). Not part of the
+    public API: the package boundary imports it internally to build the void tags.
+    """
+
+    def construct(attrs: dict[str, str]) -> Element:
+        return Element(name=name, attrs=attrs)
 
     return construct
 
@@ -84,10 +99,8 @@ def render(node: ElementOrStr) -> str:
         for name, value in node.attrs.items()
     )
     if node.name in _VOID_ELEMENTS:
-        # Void elements have no children and no closing tag. Content passed to a void
-        # constructor is intentionally dropped in 1.0.0: supporting it would need a
-        # void-specific factory or Element subclass, which would break the uniform
-        # tag([children], {attrs}) signature — and HTML has no custom void elements.
+        # Void elements self-close and have no closing tag. Their constructors
+        # (void_element) take attrs only, so a void Element carries no children.
         return f"<{node.name}{attributes}/>"
     children = "".join(render(child) for child in node.content)
     return f"<{node.name}{attributes}>{children}</{node.name}>"
