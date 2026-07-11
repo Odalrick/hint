@@ -4,6 +4,18 @@
 rendering it to a string once. *hint is not templating.* Start with `README.md` for the API and
 `docs/superpowers/specs/2026-07-10-hint-extraction-design.md` for the design rationale.
 
+## Commands
+
+```bash
+uv sync --locked                        # install: dev deps + editable package
+make check                              # all four gates (run before every push)
+make format                             # ruff format + ruff check --fix
+uv run pytest src/hint/render_test.py   # a single test file
+uv run pytest -k void                   # tests matching a name
+```
+
+Install as a dependency (until PyPI): `uv add "hint-html @ git+https://github.com/Odalrick/hint"`.
+
 ## Package structure — a re-export boundary
 
 `hint/__init__.py` is a **boundary**: it re-exports the public API and defines the tag constructors,
