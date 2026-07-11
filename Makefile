@@ -1,4 +1,17 @@
-.PHONY: check lint format typecheck imports test
+.DEFAULT_GOAL := help
+
+.PHONY: help check lint format typecheck imports test
+
+help:
+	@echo "Usage: make <target>"
+	@echo ""
+	@echo "Checks"
+	@echo "  check       All gates: lint, typecheck, imports, test — run before every push"
+	@echo "  lint        ruff check + ruff format --check"
+	@echo "  format      ruff format + ruff check --fix"
+	@echo "  typecheck   pyright (strict)"
+	@echo "  imports     import-linter contracts"
+	@echo "  test        pytest"
 
 check: lint typecheck imports test
 
