@@ -29,6 +29,16 @@ def test_markdown_escapes_raw_html_in_untrusted_input() -> None:
     assert "&lt;script&gt;" in result.content
 
 
+def test_markdown_blocks_dangerous_link_schemes() -> None:
+    dangerous = markdown("[x](javascript:alert)")
+    assert isinstance(dangerous, RawHtml)
+    assert 'href="javascript:' not in dangerous.content
+    # a normal scheme still becomes a real link, so the block is scheme-specific
+    safe = markdown("[ok](https://example.com)")
+    assert isinstance(safe, RawHtml)
+    assert 'href="https://example.com"' in safe.content
+
+
 def test_pre_fallback_escapes_its_text() -> None:
     assert render(_render_as_pre("a < b & c")) == "<pre>a &lt; b &amp; c</pre>"
 

@@ -100,5 +100,5 @@ name = "markdown_it is reachable only through hint._markdown"
 type = "forbidden"
 source_modules = ["hint"]
 forbidden_modules = ["markdown_it"]
-allow_indirect_imports = "true"
+allow_indirect_imports = true
 ignore_imports = ["hint._markdown -> markdown_it"]

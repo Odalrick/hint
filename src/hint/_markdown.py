@@ -11,11 +11,13 @@ no per-call dependency check and no availability flag: :data:`markdown` simply
 
 from collections.abc import Callable
 
-from hint import Element, ElementOrStr, RawHtml, pre
+from hint._core import Element, ElementOrStr, RawHtml
 
 
 def _render_as_pre(text: str) -> Element:
-    return pre([text], {})
+    # Build the <pre> element directly (not via the `pre` constructor) so this internal
+    # module depends only on hint._core, never back on the hint package boundary.
+    return Element(name="pre", content=[text], attrs={})
 
 
 def _select_renderer() -> Callable[[str], ElementOrStr]:
@@ -28,7 +30,7 @@ def _select_renderer() -> Callable[[str], ElementOrStr]:
     # html=False escapes raw HTML embedded in the markdown *input*, so untrusted
     # markdown cannot inject markup. markdown_it also validates link schemes by
     # default (blocking javascript:/vbscript:). Output is safe, hence RawHtml.
-    parser = MarkdownIt("commonmark", {"breaks": True, "html": False}).enable("table")
+    parser = MarkdownIt("commonmark", {"html": False}).enable("table")
 
     def render_markdown(text: str) -> RawHtml:
         return RawHtml(parser.render(text))

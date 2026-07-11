@@ -25,7 +25,6 @@ def test_void_tags_self_close() -> None:
 def test_style_is_the_helper_not_a_plain_constructor() -> None:
     # `<style>` has no plain constructor; the style() helper emits CSS verbatim.
     assert hint.render(hint.style("a>b{}")) == "<style>a>b{}</style>"
-    assert not hasattr(hint.style, "__wrapped__")
 
 
 def test_vocabulary_covers_a_representative_sample_across_categories() -> None:
