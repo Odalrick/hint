@@ -11,15 +11,17 @@ def test_del_alias_renders_a_del_element() -> None:
 
 
 def test_builtin_shadowing_tags_are_available_and_correct() -> None:
-    assert hint.render(hint.input([], {"type": "text"})) == '<input type="text"/>'
+    # input is a void element, so it takes attrs only; object and map are not.
+    assert hint.render(hint.input({"type": "text"})) == '<input type="text"/>'
     assert hint.render(hint.object([], {})) == "<object></object>"
     assert hint.render(hint.map([], {})) == "<map></map>"
 
 
-def test_void_tags_self_close() -> None:
-    assert hint.render(hint.br([], {})) == "<br/>"
-    assert hint.render(hint.hr([], {})) == "<hr/>"
-    assert hint.render(hint.img([], {"src": "/x"})) == '<img src="/x"/>'
+def test_void_tags_take_attrs_only_and_self_close() -> None:
+    # Void constructors take attrs only — hint.br(["x"], {}) would not type-check.
+    assert hint.render(hint.br({})) == "<br/>"
+    assert hint.render(hint.hr({})) == "<hr/>"
+    assert hint.render(hint.img({"src": "/x"})) == '<img src="/x"/>'
 
 
 def test_style_is_the_helper_not_a_plain_constructor() -> None:

@@ -18,10 +18,12 @@ from hint._core import (
     ElementOrStr as ElementOrStr,
     Node as Node,
     RawHtml as RawHtml,
+    VoidNode as VoidNode,
     element as element,
     render as render,
     render_html as render_html,
     style as style,
+    void_element as _void_element,
 )
 from hint._markdown import markdown as markdown
 
@@ -33,10 +35,10 @@ from hint._markdown import markdown as markdown
 html: Node = element("html")
 
 # Document metadata
-base: Node = element("base")
+base: VoidNode = _void_element("base")
 head: Node = element("head")
-link: Node = element("link")
-meta: Node = element("meta")
+link: VoidNode = _void_element("link")
+meta: VoidNode = _void_element("meta")
 title: Node = element("title")
 
 # Sectioning root
@@ -68,7 +70,7 @@ dl: Node = element("dl")
 dt: Node = element("dt")
 figcaption: Node = element("figcaption")
 figure: Node = element("figure")
-hr: Node = element("hr")
+hr: VoidNode = _void_element("hr")
 li: Node = element("li")
 menu: Node = element("menu")
 ol: Node = element("ol")
@@ -82,7 +84,7 @@ abbr: Node = element("abbr")
 b: Node = element("b")
 bdi: Node = element("bdi")
 bdo: Node = element("bdo")
-br: Node = element("br")
+br: VoidNode = _void_element("br")
 cite: Node = element("cite")
 code: Node = element("code")
 data: Node = element("data")
@@ -105,22 +107,22 @@ sup: Node = element("sup")
 time: Node = element("time")
 u: Node = element("u")
 var: Node = element("var")
-wbr: Node = element("wbr")
+wbr: VoidNode = _void_element("wbr")
 
 # Image and multimedia
-area: Node = element("area")
+area: VoidNode = _void_element("area")
 audio: Node = element("audio")
-img: Node = element("img")
+img: VoidNode = _void_element("img")
 map: Node = element("map")
-track: Node = element("track")
+track: VoidNode = _void_element("track")
 video: Node = element("video")
 
 # Embedded content
-embed: Node = element("embed")
+embed: VoidNode = _void_element("embed")
 iframe: Node = element("iframe")
 object: Node = element("object")
 picture: Node = element("picture")
-source: Node = element("source")
+source: VoidNode = _void_element("source")
 
 # Scripting
 canvas: Node = element("canvas")
@@ -133,7 +135,7 @@ ins: Node = element("ins")
 
 # Table content
 caption: Node = element("caption")
-col: Node = element("col")
+col: VoidNode = _void_element("col")
 colgroup: Node = element("colgroup")
 table: Node = element("table")
 tbody: Node = element("tbody")
@@ -148,7 +150,7 @@ button: Node = element("button")
 datalist: Node = element("datalist")
 fieldset: Node = element("fieldset")
 form: Node = element("form")
-input: Node = element("input")
+input: VoidNode = _void_element("input")
 label: Node = element("label")
 legend: Node = element("legend")
 meter: Node = element("meter")

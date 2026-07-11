@@ -70,9 +70,20 @@ There is a constructor for every element in the current HTML Living Standard: `d
 hint.a(["home"], {"href": "/", "class": "nav-link"})
 ```
 
-The signature is always `(content, attrs)` — both positional, both required. Empty cases are
-spelled out: `hint.br([], {})`, `hint.div([], {})`. This is deliberate; it keeps every call
-site uniform. Children may be `Element`s, plain `str` (escaped on render), or `RawHtml`.
+The signature is `(content, attrs)` — both positional, both required. Empty cases are spelled
+out: `hint.div([], {})`. This is deliberate; it keeps every call site uniform. Children may be
+`Element`s, plain `str` (escaped on render), or `RawHtml`.
+
+**Void elements** (`br`, `img`, `input`, `hr`, `link`, `meta`, …) take **attrs only** — they
+have no children in HTML, so their constructor has no content parameter:
+
+```python
+hint.br({})
+hint.img({"src": "/logo.png", "alt": "Logo"})
+```
+
+Passing children to a void element is a type error, not a silent drop — `hint.br(["x"], {})`
+does not type-check.
 
 A page-builder is just a function that returns an `Element`, composing freely:
 
