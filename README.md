@@ -112,6 +112,47 @@ safe to use as `hint.input(...)` (qualified access shadows nothing).
 - `hint.render_html(root)` → prepends `<!DOCTYPE html>` and requires the root to be `<html>`
   (raises `ValueError` otherwise).
 
+### Streaming
+
+For pages whose content is expensive to produce (slow API calls, large lists), render
+incrementally instead of building the whole string first. `render_stream` and
+`render_html_stream` are synchronous **co-generators**: they yield HTML chunks as `str`,
+and yield a `hint.Hole` when they reach a named placeholder. The consumer sends back a
+`list[Element | str | RawHtml]` for that hole, which is spliced in — nested holes and all.
+
+```python
+page = hint.tbody([hint.hole("rows")], {})
+```
+
+Drive it with a loop that fills each hole by name (`[]` leaves a hole empty):
+
+```python
+generator = hint.render_stream(page)
+to_send = None
+while True:
+    try:
+        item = generator.send(to_send)   # first call primes with None
+    except StopIteration:
+        break
+    to_send = None
+    if isinstance(item, hint.Hole):
+        to_send = build_rows(item.name)  # a list of <tr> elements
+    else:
+        emit(item)                       # a str chunk — write it to the socket
+```
+
+`hint` stays synchronous. Because the loop is yours, an async consumer (FastAPI
+`StreamingResponse`) is free to `await` slow work between a hole and its `send`. The eager
+`render` / `render_html` are unchanged; calling `render` on a tree that contains a hole
+raises `ValueError`, since an eager render cannot fill it.
+
+`render_html_stream(root)` is the full-document form — it emits `<!DOCTYPE html>` first and
+requires an `<html>` root, otherwise identical.
+
+> The high-value pattern — dispatching every hole's fetch up front so they run in parallel,
+> then awaiting each as the walk reaches it — is left to the consumer for now; a helper for it
+> is planned (see `BACKLOG.md`).
+
 ### Escaping and `RawHtml`
 
 `render` escapes every `str` child and attribute value. The single escape hatch is

@@ -3,12 +3,14 @@
 Possible future work for `hint`. One section per idea — none of it is committed to, and the
 list is expected to churn. See `docs/superpowers/specs/` for designs once an item is picked up.
 
-## Streaming responses (1.1.0)
+## Async streaming driver
 
-The motivating reason to extract `hint` into a library. Add `render_stream(node) -> Iterator[str]`
-that yields the document in chunks, with `render` becoming `"".join(render_stream(node))`. The
-1.0.0 `render` is a plain recursive walk with exactly this refactor in mind — the tree model
-(`Element`/`RawHtml`/`str`) already supports it, so this is an addition, not a rewrite.
+`render_stream` / `render_html_stream` (shipped in 1.1.0) are synchronous co-generators; the
+consumer drives them and fills holes. The high-value consumer pattern dispatches every hole's
+fetch up front as parallel tasks (total latency `max`, not `sum`), then awaits each task as the
+walk reaches it, emitting in document order. Add an async helper that encapsulates this drive
+loop given a `name -> awaitable` mapping — possibly alongside a `holes(node)` enumerator so the
+set of names can be discovered from a tree. Consumer-side and general; kept out of the sync core.
 
 ## Content negotiation
 

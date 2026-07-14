@@ -66,6 +66,9 @@ untrusted input.
 - Global ignore of `TC001`/`TC002`/`TC003` in `pyproject.toml`: flake8-type-checking assumes stringized
   annotations, but this project evaluates annotations at runtime (no `from __future__ import annotations`).
 - Per-site `# noqa: PLC0415` on the lazy `markdown_it` import — that lazy import is the point.
+- Per-site `# noqa: TRY004` on `render`'s `raise ValueError` for an unresolved `Hole`: TRY004 wants a
+  `TypeError` after an `isinstance` check, but a `Hole` is a valid, well-typed value `render` simply
+  cannot resolve (you meant to stream) — a `ValueError`, not a type error.
 
 ## Versioning & commits
 
