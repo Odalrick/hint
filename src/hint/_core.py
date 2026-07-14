@@ -16,7 +16,17 @@ class RawHtml:
     content: str
 
 
-type ElementOrStr = Element | str | RawHtml
+@dataclass
+class Hole:
+    """A named placeholder that :func:`render_stream` suspends at.
+
+    To be filled by the consumer.
+    """
+
+    name: str
+
+
+type ElementOrStr = Element | str | RawHtml | Hole
 
 
 def _no_children() -> list[ElementOrStr]:
@@ -68,6 +78,11 @@ def style(content: str) -> Element:
     return Element(name="style", content=[RawHtml(content)], attrs={})
 
 
+def hole(name: str) -> Hole:
+    """Return a named :class:`Hole` placeholder for streaming render to suspend at."""
+    return Hole(name=name)
+
+
 # The HTML Living Standard void elements — they never have children or a closing tag.
 _VOID_ELEMENTS = frozenset(
     {
@@ -94,6 +109,7 @@ def render(node: ElementOrStr) -> str:
         return node.content
     if isinstance(node, str):
         return escape(node)
+    assert isinstance(node, Element)  # noqa: S101
     attributes = "".join(
         f' {escape(name, quote=True)}="{escape(value, quote=True)}"'
         for name, value in node.attrs.items()

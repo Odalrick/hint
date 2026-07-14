@@ -16,10 +16,12 @@ no registry. Obsolete elements and the SVG/MathML vocabularies are out of scope.
 from hint._core import (
     Element as Element,
     ElementOrStr as ElementOrStr,
+    Hole as Hole,
     Node as Node,
     RawHtml as RawHtml,
     VoidNode as VoidNode,
     element as element,
+    hole as hole,
     render as render,
     render_html as render_html,
     style as style,
