@@ -3,8 +3,7 @@
   "packages": {
     ".": {
       "release-type": "python",
-      "package-name": "hint-html",
-      "release-as": "1.0.0"
+      "package-name": "hint-html"
     }
   }
 }
