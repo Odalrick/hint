@@ -116,7 +116,10 @@ def render_stream(
         yield node.content
         return
     if isinstance(node, Hole):
-        yield node
+        filling = yield node
+        if filling:  # None (priming/advance artifact) or [] both render empty
+            for child in filling:
+                yield from render_stream(child)
         return
     if isinstance(node, str):
         yield escape(node)

@@ -60,3 +60,50 @@ def test_render_raises_on_an_unresolved_hole() -> None:
 def test_stream_surfaces_the_hole_as_a_hole_item() -> None:
     items = list(render_stream(element("div")([hole("rows")], {})))
     assert items == ["<div>", Hole(name="rows"), "</div>"]
+
+
+def drive(node: ElementOrStr, fills: dict[str, list[ElementOrStr]]) -> str:
+    """Drive render_stream to completion, filling each hole from `fills` by name."""
+    generator = render_stream(node)
+    parts: list[str] = []
+    to_send: list[ElementOrStr] | None = None
+    while True:
+        try:
+            item = generator.send(to_send)
+        except StopIteration:
+            break
+        to_send = None
+        if isinstance(item, Hole):
+            to_send = fills.get(item.name, [])
+        else:
+            parts.append(item)
+    return "".join(parts)
+
+
+def test_hole_filled_with_a_single_element() -> None:
+    tree = element("main")([hole("body")], {})
+    filled = drive(tree, {"body": [element("p")(["hi"], {})]})
+    assert filled == "<main><p>hi</p></main>"
+
+
+def test_hole_filled_with_a_sibling_list_needs_no_wrapper() -> None:
+    tree = element("tbody")([hole("rows")], {})
+    rows: list[ElementOrStr] = [
+        element("tr")([element("td")([str(n)], {})], {}) for n in (1, 2)
+    ]
+    filled = drive(tree, {"rows": rows})
+    assert filled == "<tbody><tr><td>1</td></tr><tr><td>2</td></tr></tbody>"
+
+
+def test_unfilled_hole_renders_empty() -> None:
+    tree = element("div")(["a", hole("gap"), "b"], {})
+    assert drive(tree, {}) == "<div>ab</div>"
+
+
+def test_nested_hole_in_sent_content_is_fillable() -> None:
+    tree = element("section")([hole("outer")], {})
+    fills: dict[str, list[ElementOrStr]] = {
+        "outer": [element("div")([hole("inner")], {})],
+        "inner": [element("span")(["deep"], {})],
+    }
+    assert drive(tree, fills) == "<section><div><span>deep</span></div></section>"
