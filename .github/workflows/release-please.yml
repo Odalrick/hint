@@ -13,6 +13,33 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: googleapis/release-please-action@v4
+        id: release
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+
+      # release-please bumps pyproject.toml but not uv.lock's own-package version, so the
+      # lock drifts every release and breaks `uv sync --locked`. Re-lock on the release PR
+      # branch so main stays --locked-clean once the release PR merges.
+      - if: ${{ steps.release.outputs.pr }}
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ fromJSON(steps.release.outputs.pr).headBranchName }}
+
+      - if: ${{ steps.release.outputs.pr }}
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - if: ${{ steps.release.outputs.pr }}
+        run: uv lock
+
+      - if: ${{ steps.release.outputs.pr }}
+        run: |
+          if ! git diff --quiet uv.lock; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add uv.lock
+            git commit -m "chore: update uv.lock for release"
+            git push
+          fi
