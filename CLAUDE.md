@@ -73,8 +73,9 @@ untrusted input.
 ## Versioning & commits
 
 - Conventional commits. Scopes: `core`, `tags`, `markdown`, `render`, `build`, `ci`, `docs`, `deps`.
-- **release-please** drives versioning/changelog/releases. The first release is forced to `1.0.0` via
-  `release-as`; **remove that key after 1.0.0 ships** (BACKLOG) or every release pins to 1.0.0.
+- **release-please** drives versioning/changelog/releases from conventional commits (`fix:` → patch,
+  `feat:` → minor, `!` / `BREAKING CHANGE` → major). The `release-as` pin that forced the initial
+  `1.0.0` was removed once 1.0.0 shipped, so versions now bump normally from commit types.
 
 ## Related
 
