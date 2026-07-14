@@ -118,7 +118,8 @@ For pages whose content is expensive to produce (slow API calls, large lists), r
 incrementally instead of building the whole string first. `render_stream` and
 `render_html_stream` are synchronous **co-generators**: they yield HTML chunks as `str`,
 and yield a `hint.Hole` when they reach a named placeholder. The consumer sends back a
-`list[Element | str | RawHtml]` for that hole, which is spliced in — nested holes and all.
+`list[ElementOrStr]` (which includes `Hole`, so a fill can itself contain unfilled holes) for
+that hole, which is spliced in — nested holes and all.
 
 ```python
 page = hint.tbody([hint.hole("rows")], {})
