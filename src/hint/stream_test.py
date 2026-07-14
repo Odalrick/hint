@@ -142,3 +142,26 @@ def test_html_stream_fills_holes_in_the_body() -> None:
     page = element("html")([element("body")([hole("main")], {})], {})
     filled = drive_html(page, {"main": [element("h1")(["Home"], {})]})
     assert filled == "<!DOCTYPE html>\n<html><body><h1>Home</h1></body></html>"
+
+
+def test_stream_self_closes_a_void_element_with_escaped_attrs() -> None:
+    items = list(render_stream(element("img")([], {"src": "/a<b>"})))
+    assert items == ['<img src="/a&lt;b&gt;"/>']
+
+
+def test_fill_content_is_escaped() -> None:
+    tree = element("div")([hole("x")], {})
+    assert drive(tree, {"x": ["<script>"]}) == "<div>&lt;script&gt;</div>"
+
+
+def test_bare_hole_in_a_fill_list_is_itself_filled() -> None:
+    tree = element("div")([hole("a")], {})
+    fills: dict[str, list[ElementOrStr]] = {
+        "a": [hole("b")],
+        "b": [element("span")(["z"], {})],
+    }
+    assert drive(tree, fills) == "<div><span>z</span></div>"
+
+
+def test_hole_as_the_top_level_node_is_filled() -> None:
+    assert drive(hole("x"), {"x": [element("p")(["hi"], {})]}) == "<p>hi</p>"
