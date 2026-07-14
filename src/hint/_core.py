@@ -4,7 +4,7 @@ Internal module. Import these names from the package boundary (``hint``), not fr
 here (``from hint import Element, render``) — except sibling internal modules and tests.
 """
 
-from collections.abc import Callable
+from collections.abc import Callable, Generator
 from dataclasses import dataclass, field
 from html import escape
 
@@ -27,6 +27,7 @@ class Hole:
 
 
 type ElementOrStr = Element | str | RawHtml | Hole
+type StreamItem = str | Hole
 
 
 def _no_children() -> list[ElementOrStr]:
@@ -103,23 +104,51 @@ _VOID_ELEMENTS = frozenset(
 )
 
 
-def render(node: ElementOrStr) -> str:
-    """Render a description tree to an HTML string, escaping text and attributes."""
+def render_stream(
+    node: ElementOrStr,
+) -> Generator[StreamItem, list[ElementOrStr] | None]:
+    """Stream a description tree as HTML chunks, suspending at each :class:`Hole`.
+
+    Yields ``str`` output; yields a :class:`Hole` when it reaches a placeholder and
+    (in the filled form) splices back the ``list[ElementOrStr]`` the consumer sends.
+    """
     if isinstance(node, RawHtml):
-        return node.content
+        yield node.content
+        return
+    if isinstance(node, Hole):
+        yield node
+        return
     if isinstance(node, str):
-        return escape(node)
-    assert isinstance(node, Element)  # noqa: S101
+        yield escape(node)
+        return
     attributes = "".join(
         f' {escape(name, quote=True)}="{escape(value, quote=True)}"'
         for name, value in node.attrs.items()
     )
     if node.name in _VOID_ELEMENTS:
-        # Void elements self-close and have no closing tag. Their constructors
-        # (void_element) take attrs only, so a void Element carries no children.
-        return f"<{node.name}{attributes}/>"
-    children = "".join(render(child) for child in node.content)
-    return f"<{node.name}{attributes}>{children}</{node.name}>"
+        yield f"<{node.name}{attributes}/>"
+        return
+    yield f"<{node.name}{attributes}>"
+    for child in node.content:
+        yield from render_stream(child)
+    yield f"</{node.name}>"
+
+
+def render(node: ElementOrStr) -> str:
+    """Render a description tree to an HTML string, escaping text and attributes.
+
+    Drives :func:`render_stream` and joins its output. Raises ``ValueError`` if the
+    tree contains a :class:`Hole` — an eager render cannot resolve one.
+    """
+    parts: list[str] = []
+    for item in render_stream(node):
+        if isinstance(item, Hole):
+            message = f"render() cannot resolve hole {item.name!r}; use render_stream"
+            # A Hole here is a valid, well-typed value that render() cannot resolve —
+            # not a type-safety violation, so ValueError (not TypeError) is correct.
+            raise ValueError(message)  # noqa: TRY004
+        parts.append(item)
+    return "".join(parts)
 
 
 def render_html(root: Element) -> str:

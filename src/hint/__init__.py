@@ -19,11 +19,13 @@ from hint._core import (
     Hole as Hole,
     Node as Node,
     RawHtml as RawHtml,
+    StreamItem as StreamItem,
     VoidNode as VoidNode,
     element as element,
     hole as hole,
     render as render,
     render_html as render_html,
+    render_stream as render_stream,
     style as style,
     void_element as _void_element,
 )
