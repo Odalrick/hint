@@ -25,6 +25,7 @@ from hint._core import (
     hole as hole,
     render as render,
     render_html as render_html,
+    render_html_stream as render_html_stream,
     render_stream as render_stream,
     style as style,
     void_element as _void_element,
