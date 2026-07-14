@@ -4,7 +4,7 @@ Internal module. Import these names from the package boundary (``hint``), not fr
 here (``from hint import Element, render``) — except sibling internal modules and tests.
 """
 
-from collections.abc import Callable
+from collections.abc import Callable, Generator
 from dataclasses import dataclass, field
 from html import escape
 
@@ -16,7 +16,18 @@ class RawHtml:
     content: str
 
 
-type ElementOrStr = Element | str | RawHtml
+@dataclass
+class Hole:
+    """A named placeholder that :func:`render_stream` suspends at.
+
+    To be filled by the consumer.
+    """
+
+    name: str
+
+
+type ElementOrStr = Element | str | RawHtml | Hole
+type StreamItem = str | Hole
 
 
 def _no_children() -> list[ElementOrStr]:
@@ -68,6 +79,11 @@ def style(content: str) -> Element:
     return Element(name="style", content=[RawHtml(content)], attrs={})
 
 
+def hole(name: str) -> Hole:
+    """Return a named :class:`Hole` placeholder for streaming render to suspend at."""
+    return Hole(name=name)
+
+
 # The HTML Living Standard void elements — they never have children or a closing tag.
 _VOID_ELEMENTS = frozenset(
     {
@@ -88,22 +104,54 @@ _VOID_ELEMENTS = frozenset(
 )
 
 
-def render(node: ElementOrStr) -> str:
-    """Render a description tree to an HTML string, escaping text and attributes."""
+def render_stream(
+    node: ElementOrStr,
+) -> Generator[StreamItem, list[ElementOrStr] | None]:
+    """Stream a description tree as HTML chunks, suspending at each :class:`Hole`.
+
+    Yields ``str`` output; yields a :class:`Hole` when it reaches a placeholder and
+    (in the filled form) splices back the ``list[ElementOrStr]`` the consumer sends.
+    """
     if isinstance(node, RawHtml):
-        return node.content
+        yield node.content
+        return
+    if isinstance(node, Hole):
+        filling = yield node
+        if filling:  # None (priming/advance artifact) or [] both render empty
+            for child in filling:
+                yield from render_stream(child)
+        return
     if isinstance(node, str):
-        return escape(node)
+        yield escape(node)
+        return
     attributes = "".join(
         f' {escape(name, quote=True)}="{escape(value, quote=True)}"'
         for name, value in node.attrs.items()
     )
     if node.name in _VOID_ELEMENTS:
-        # Void elements self-close and have no closing tag. Their constructors
-        # (void_element) take attrs only, so a void Element carries no children.
-        return f"<{node.name}{attributes}/>"
-    children = "".join(render(child) for child in node.content)
-    return f"<{node.name}{attributes}>{children}</{node.name}>"
+        yield f"<{node.name}{attributes}/>"
+        return
+    yield f"<{node.name}{attributes}>"
+    for child in node.content:
+        yield from render_stream(child)
+    yield f"</{node.name}>"
+
+
+def render(node: ElementOrStr) -> str:
+    """Render a description tree to an HTML string, escaping text and attributes.
+
+    Drives :func:`render_stream` and joins its output. Raises ``ValueError`` if the
+    tree contains a :class:`Hole` — an eager render cannot resolve one.
+    """
+    parts: list[str] = []
+    for item in render_stream(node):
+        if isinstance(item, Hole):
+            message = f"render() cannot resolve hole {item.name!r}; use render_stream"
+            # A Hole here is a valid, well-typed value that render() cannot resolve —
+            # not a type-safety violation, so ValueError (not TypeError) is correct.
+            raise ValueError(message)  # noqa: TRY004
+        parts.append(item)
+    return "".join(parts)
 
 
 def render_html(root: Element) -> str:
@@ -112,3 +160,14 @@ def render_html(root: Element) -> str:
         message = "render_html requires an <html> root element"
         raise ValueError(message)
     return f"<!DOCTYPE html>\n{render(root)}"
+
+
+def render_html_stream(
+    root: Element,
+) -> Generator[StreamItem, list[ElementOrStr] | None]:
+    """Stream a full ``<html>`` document, doctype first, suspending at holes."""
+    if root.name != "html":
+        message = "render_html_stream requires an <html> root element"
+        raise ValueError(message)
+    yield "<!DOCTYPE html>\n"
+    yield from render_stream(root)
