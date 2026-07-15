@@ -1,5 +1,6 @@
 import asyncio
 from collections.abc import Awaitable
+from contextlib import aclosing
 
 import pytest
 
@@ -177,14 +178,25 @@ def test_early_break_cancels_outstanding_tasks() -> None:
                 raise
             return []  # pragma: no cover
 
-        # "slow" is dispatched up front; we break before the walk reaches its hole.
         tree = element("div")(["x", hole("slow")], {})
-        async for chunk in render_stream_async(tree, {"slow": slow()}):
-            if chunk == "<div>":
-                break  # exiting the async-for calls aclose() → _drive.finally runs
+        # aclosing() guarantees aclose() runs when we leave the block, so the
+        # up-front-dispatched "slow" task is cancelled by _drive's finally — not
+        # by asyncio.run's shutdown backstop. Asserting inside scenario (before
+        # the loop tears down) pins the cleanup to the driver itself.
+        async with aclosing(render_stream_async(tree, {"slow": slow()})) as chunks:
+            async for chunk in chunks:
+                if chunk == "<div>":
+                    # The sync walk emits "<div>" without ever awaiting, so the
+                    # event loop hasn't yet given "slow" its first turn. Yield
+                    # once so it actually enters its try/await before we break
+                    # and trigger cancellation — otherwise cancel() lands on a
+                    # not-yet-started task and CancelledError never reaches the
+                    # except clause below.
+                    await asyncio.sleep(0)
+                    break
+        assert cancelled.is_set()
 
     asyncio.run(scenario())
-    assert cancelled.is_set()
 
 
 def collect_html(root: Element, fills: dict[str, Awaitable[list[ElementOrStr]]]) -> str:

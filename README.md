@@ -181,6 +181,10 @@ Three guarantees worth knowing:
 Document order is deliberate: a single HTTP response body is an in-order byte stream in every
 version of the protocol, so this maps 1:1 onto the wire with no client-side runtime.
 
+If you stop consuming early (a `break` out of the `async for`), wrap the iterator in
+`contextlib.aclosing()` so the outstanding fetches are cancelled promptly — a bare `break`
+leaves them running until the async generator is finalised.
+
 ### Escaping and `RawHtml`
 
 `render` escapes every `str` child and attribute value. The single escape hatch is

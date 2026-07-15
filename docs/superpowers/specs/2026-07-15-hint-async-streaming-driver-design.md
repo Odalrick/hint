@@ -222,7 +222,7 @@ value — first, and add `holes()` only if it earns its place against a concrete
 
 ## Testing
 
-- Colocated `src/hint/_async_test.py` (project convention: `*_test.py` under `src`).
+- Colocated `src/hint/async_test.py` (project convention: `*_test.py` under `src`).
 - Tests use `asyncio.run(...)` to drive an async collector, so **no `pytest-asyncio` dependency** is
   added. A small helper collects an async generator into a `list[str]`.
 - Cases:
