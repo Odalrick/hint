@@ -101,3 +101,37 @@ def test_hole_with_no_fill_raises_naming_the_hole() -> None:
 
     with pytest.raises(ValueError, match="orphan"):
         asyncio.run(scenario())
+
+
+def test_static_nested_hole_in_fills_is_resolved() -> None:
+    async def outer() -> list[ElementOrStr]:
+        return [element("div")([hole("inner")], {})]
+
+    async def inner() -> list[ElementOrStr]:
+        return [element("span")(["deep"], {})]
+
+    tree = element("section")([hole("outer")], {})
+    fills: dict[str, Awaitable[list[ElementOrStr]]] = {
+        "outer": outer(),
+        "inner": inner(),
+    }
+    expected = "<section><div><span>deep</span></div></section>"
+    assert collect(tree, fills) == expected
+
+
+def test_dynamic_hole_added_by_a_completing_fill_is_resolved() -> None:
+    async def scenario() -> str:
+        fills: dict[str, Awaitable[list[ElementOrStr]]] = {}
+
+        async def inner() -> list[ElementOrStr]:
+            return ["deep"]
+
+        async def outer() -> list[ElementOrStr]:
+            fills["inner"] = inner()  # invent a new hole + register its fetch
+            return [element("div")([hole("inner")], {})]
+
+        fills["outer"] = outer()
+        tree = element("section")([hole("outer")], {})
+        return "".join([c async for c in render_stream_async(tree, fills)])
+
+    assert asyncio.run(scenario()) == "<section><div>deep</div></section>"
