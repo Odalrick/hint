@@ -150,9 +150,36 @@ raises `ValueError`, since an eager render cannot fill it.
 `render_html_stream(root)` is the full-document form — it emits `<!DOCTYPE html>` first and
 requires an `<html>` root, otherwise identical.
 
-> The high-value pattern — dispatching every hole's fetch up front so they run in parallel,
-> then awaiting each as the walk reaches it — is left to the consumer for now; a helper for it
-> is planned (see `BACKLOG.md`).
+#### Async driver: parallel fetches, document order
+
+`render_stream_async` / `render_html_stream_async` encapsulate the high-value pattern: given a
+`name -> awaitable` mapping, they dispatch every known hole's fetch **up front** (so total latency
+is `max`, not `sum`), then drive the walk and `await` each hole as it is reached, yielding `str`
+chunks in document order. asyncio only.
+
+```python
+fills = {
+    "header": fetch_header(),   # coroutines; the driver wraps each into a task up front
+    "rows": fetch_rows(),
+    "footer": fetch_footer(),
+}
+async for chunk in hint.render_html_stream_async(page, fills):
+    await response.write(chunk)
+```
+
+Each awaitable resolves to a `list[ElementOrStr]` — the same fill contract as the sync path.
+Three guarantees worth knowing:
+
+- **Caching:** equal hole names resolve to the *exact same fill data* (resolved once, cached).
+- **Dynamic holes:** `fills` is read live, so a completing fill may invent a new hole and add its
+  awaitable to the mapping. The inventor is expected to start that fetch itself — by the time the
+  walk reaches a dynamic hole, its siblings are already emitted.
+- **Strict fills:** a hole with no entry in `fills` raises `ValueError` (spell "deliberately empty"
+  as an awaitable resolving to `[]`). This is stricter than the low-level co-generator, which
+  renders an unreached hole empty.
+
+Document order is deliberate: a single HTTP response body is an in-order byte stream in every
+version of the protocol, so this maps 1:1 onto the wire with no client-side runtime.
 
 ### Escaping and `RawHtml`
 

@@ -26,6 +26,8 @@ See the "boundary package" rule in add-comply's CLAUDE.md.
   `void_element`/`VoidNode`, `style`, the void-element set, `render`, `render_html`.
 - `hint/_markdown.py` — the optional `markdown` binding. Imports `hint._core`, never the package
   boundary, so there is no import cycle.
+- `hint/_async.py` — the optional async driver (`render_stream_async`, `render_html_stream_async`).
+  asyncio-only; imports `hint._core`, never the package boundary. Keeps the sync core sync.
 - Internal modules are imported from the boundary, not from outside the package. `import-linter`
   guards this and the pure-core invariant.
 

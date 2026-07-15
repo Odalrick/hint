@@ -3,15 +3,6 @@
 Possible future work for `hint`. One section per idea — none of it is committed to, and the
 list is expected to churn. See `docs/superpowers/specs/` for designs once an item is picked up.
 
-## Async streaming driver
-
-`render_stream` / `render_html_stream` (shipped in 1.1.0) are synchronous co-generators; the
-consumer drives them and fills holes. The high-value consumer pattern dispatches every hole's
-fetch up front as parallel tasks (total latency `max`, not `sum`), then awaits each task as the
-walk reaches it, emitting in document order. Add an async helper that encapsulates this drive
-loop given a `name -> awaitable` mapping — possibly alongside a `holes(node)` enumerator so the
-set of names can be discovered from a tree. Consumer-side and general; kept out of the sync core.
-
 ## Content negotiation
 
 Extract the `substrate.negotiate` helpers (serve HTML or JSON from one handler by `Accept`
