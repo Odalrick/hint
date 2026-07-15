@@ -161,3 +161,25 @@ def test_failing_fill_propagates_and_cancels_siblings() -> None:
     with pytest.raises(RuntimeError, match="nope"):
         asyncio.run(scenario())
     assert cancelled.is_set()
+
+
+def test_early_break_cancels_outstanding_tasks() -> None:
+    cancelled = asyncio.Event()
+
+    async def scenario() -> None:
+        async def slow() -> list[ElementOrStr]:
+            try:
+                await asyncio.Event().wait()
+            except asyncio.CancelledError:
+                cancelled.set()
+                raise
+            return []  # pragma: no cover
+
+        # "slow" is dispatched up front; we break before the walk reaches its hole.
+        tree = element("div")(["x", hole("slow")], {})
+        async for chunk in render_stream_async(tree, {"slow": slow()}):
+            if chunk == "<div>":
+                break  # exiting the async-for calls aclose() → _drive.finally runs
+
+    asyncio.run(scenario())
+    assert cancelled.is_set()
