@@ -49,3 +49,19 @@ def test_holes_dispatch_in_parallel_and_emit_in_document_order() -> None:
             return "".join([c async for c in render_stream_async(tree, fills)])
 
     assert asyncio.run(scenario()) == "<div>AB</div>"
+
+
+def test_repeated_hole_name_resolves_once_with_identical_data() -> None:
+    calls = 0
+
+    async def fill() -> list[ElementOrStr]:
+        nonlocal calls
+        calls += 1
+        return ["X"]
+
+    async def scenario() -> str:
+        tree = element("div")([hole("a"), hole("a")], {})
+        return "".join([c async for c in render_stream_async(tree, {"a": fill()})])
+
+    assert asyncio.run(scenario()) == "<div>XX</div>"
+    assert calls == 1
