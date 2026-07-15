@@ -1,6 +1,8 @@
 import asyncio
 from collections.abc import Awaitable
 
+import pytest
+
 from hint import (
     ElementOrStr,
     element,
@@ -90,3 +92,12 @@ def test_fill_content_is_escaped() -> None:
 
     tree = element("div")([hole("x")], {})
     assert collect(tree, {"x": fill()}) == "<div>&lt;script&gt;</div>"
+
+
+def test_hole_with_no_fill_raises_naming_the_hole() -> None:
+    async def scenario() -> list[str]:
+        tree = element("div")([hole("orphan")], {})
+        return [c async for c in render_stream_async(tree, {})]
+
+    with pytest.raises(ValueError, match="orphan"):
+        asyncio.run(scenario())
