@@ -135,3 +135,29 @@ def test_dynamic_hole_added_by_a_completing_fill_is_resolved() -> None:
         return "".join([c async for c in render_stream_async(tree, fills)])
 
     assert asyncio.run(scenario()) == "<section><div>deep</div></section>"
+
+
+def test_failing_fill_propagates_and_cancels_siblings() -> None:
+    cancelled = asyncio.Event()
+
+    async def scenario() -> None:
+        async def boom() -> list[ElementOrStr]:
+            message = "nope"
+            raise RuntimeError(message)
+
+        async def slow() -> list[ElementOrStr]:
+            try:
+                await asyncio.Event().wait()  # never completes on its own
+            except asyncio.CancelledError:
+                cancelled.set()
+                raise
+            return []  # pragma: no cover
+
+        tree = element("div")([hole("boom"), hole("slow")], {})
+        fills = {"boom": boom(), "slow": slow()}
+        async for _ in render_stream_async(tree, fills):
+            pass
+
+    with pytest.raises(RuntimeError, match="nope"):
+        asyncio.run(scenario())
+    assert cancelled.is_set()
