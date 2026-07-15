@@ -65,3 +65,28 @@ def test_repeated_hole_name_resolves_once_with_identical_data() -> None:
 
     assert asyncio.run(scenario()) == "<div>XX</div>"
     assert calls == 1
+
+
+def test_empty_list_fill_renders_empty() -> None:
+    async def fill() -> list[ElementOrStr]:
+        return []
+
+    tree = element("div")(["a", hole("gap"), "b"], {})
+    assert collect(tree, {"gap": fill()}) == "<div>ab</div>"
+
+
+def test_list_fill_splices_siblings_without_a_wrapper() -> None:
+    async def rows() -> list[ElementOrStr]:
+        return [element("tr")([element("td")([str(n)], {})], {}) for n in (1, 2)]
+
+    tree = element("tbody")([hole("rows")], {})
+    expected = "<tbody><tr><td>1</td></tr><tr><td>2</td></tr></tbody>"
+    assert collect(tree, {"rows": rows()}) == expected
+
+
+def test_fill_content_is_escaped() -> None:
+    async def fill() -> list[ElementOrStr]:
+        return ["<script>"]
+
+    tree = element("div")([hole("x")], {})
+    assert collect(tree, {"x": fill()}) == "<div>&lt;script&gt;</div>"
