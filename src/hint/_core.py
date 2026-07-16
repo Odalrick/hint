@@ -28,6 +28,7 @@ class Hole:
 
 type ElementOrStr = Element | str | RawHtml | Hole
 type StreamItem = str | Hole
+type Renderable = ElementOrStr | Document
 
 
 def _no_children() -> list[ElementOrStr]:
@@ -45,6 +46,13 @@ class Element:
     name: str
     content: list[ElementOrStr] = field(default_factory=_no_children)
     attrs: dict[str, str] = field(default_factory=_no_attrs)
+
+
+@dataclass
+class Document:
+    """A full HTML document: a doctype line followed by a single root child."""
+
+    child: Element
 
 
 type Node = Callable[[list[ElementOrStr], dict[str, str]], Element]
@@ -79,6 +87,15 @@ def style(content: str) -> Element:
     return Element(name="style", content=[RawHtml(content)], attrs={})
 
 
+def document(child: Element) -> Document:
+    """Wrap a root element as a full document: a doctype line then the child.
+
+    ``Document`` is intentionally outside ``ElementOrStr``, so a nested
+    ``document(...)`` is a type error — a doctype is only valid at the top.
+    """
+    return Document(child=child)
+
+
 def hole(name: str) -> Hole:
     """Return a named :class:`Hole` placeholder for streaming render to suspend at."""
     return Hole(name=name)
@@ -105,13 +122,17 @@ _VOID_ELEMENTS = frozenset(
 
 
 def render_stream(
-    node: ElementOrStr,
+    node: Renderable,
 ) -> Generator[StreamItem, list[ElementOrStr] | None]:
     """Stream a description tree as HTML chunks, suspending at each :class:`Hole`.
 
     Yields ``str`` output; yields a :class:`Hole` when it reaches a placeholder and
     (in the filled form) splices back the ``list[ElementOrStr]`` the consumer sends.
     """
+    if isinstance(node, Document):
+        yield "<!DOCTYPE html>\n"
+        yield from render_stream(node.child)
+        return
     if isinstance(node, RawHtml):
         yield node.content
         return
@@ -137,7 +158,7 @@ def render_stream(
     yield f"</{node.name}>"
 
 
-def render(node: ElementOrStr) -> str:
+def render(node: Renderable) -> str:
     """Render a description tree to an HTML string, escaping text and attributes.
 
     Drives :func:`render_stream` and joins its output. Raises ``ValueError`` if the

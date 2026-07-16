@@ -6,6 +6,8 @@ from hint import (
     ElementOrStr,
     Hole,
     RawHtml,
+    Renderable,
+    document,
     element,
     hole,
     render,
@@ -63,7 +65,7 @@ def test_stream_surfaces_the_hole_as_a_hole_item() -> None:
     assert items == ["<div>", Hole(name="rows"), "</div>"]
 
 
-def drive(node: ElementOrStr, fills: dict[str, list[ElementOrStr]]) -> str:
+def drive(node: Renderable, fills: dict[str, list[ElementOrStr]]) -> str:
     """Drive render_stream to completion, filling each hole from `fills` by name."""
     generator = render_stream(node)
     parts: list[str] = []
@@ -165,3 +167,14 @@ def test_bare_hole_in_a_fill_list_is_itself_filled() -> None:
 
 def test_hole_as_the_top_level_node_is_filled() -> None:
     assert drive(hole("x"), {"x": [element("p")(["hi"], {})]}) == "<p>hi</p>"
+
+
+def test_document_streams_doctype_then_child() -> None:
+    items = list(render_stream(document(element("html")([], {}))))
+    assert items == ["<!DOCTYPE html>\n", "<html>", "</html>"]
+
+
+def test_document_with_a_hole_in_the_body_is_filled() -> None:
+    page = document(element("html")([element("body")([hole("main")], {})], {}))
+    filled = drive(page, {"main": [element("h1")(["Home"], {})]})
+    assert filled == "<!DOCTYPE html>\n<html><body><h1>Home</h1></body></html>"

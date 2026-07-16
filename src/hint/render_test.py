@@ -3,7 +3,7 @@ from html import escape
 from hypothesis import given, strategies as st
 import pytest
 
-from hint import RawHtml, element, render, render_html, style
+from hint import RawHtml, document, element, render, render_html, style
 
 
 def test_renders_empty_element() -> None:
@@ -62,6 +62,10 @@ def test_render_html_prepends_exactly_one_doctype() -> None:
 def test_render_html_rejects_a_non_html_root() -> None:
     with pytest.raises(ValueError, match="html"):
         render_html(element("div")([], {}))
+
+
+def test_document_renders_doctype_then_child() -> None:
+    assert render(document(element("html")([], {}))) == "<!DOCTYPE html>\n<html></html>"
 
 
 @given(st.text())

@@ -18,13 +18,16 @@ from hint._async import (
     render_stream_async as render_stream_async,
 )
 from hint._core import (
+    Document as Document,
     Element as Element,
     ElementOrStr as ElementOrStr,
     Hole as Hole,
     Node as Node,
     RawHtml as RawHtml,
+    Renderable as Renderable,
     StreamItem as StreamItem,
     VoidNode as VoidNode,
+    document as document,
     element as element,
     hole as hole,
     render as render,
