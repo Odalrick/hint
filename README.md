@@ -199,12 +199,17 @@ leaves them running until the async generator is finalised.
 
 `render` escapes every `str` child and attribute value. The single escape hatch is
 `hint.RawHtml("...")`, whose content is emitted unchanged — for pre-rendered HTML you trust,
-such as rendered Markdown or an inline stylesheet:
+such as an inline stylesheet or a snippet you have already vetted:
 
 ```python
 hint.style("body { margin: 0 }")   # a <style> element; its CSS is emitted verbatim
 hint.RawHtml("<!-- trusted -->")   # anything you have already vetted
 ```
+
+For Markdown, don't render it yourself and wrap the result in `RawHtml` — that puts escaping
+safety back on you. Reach for the built-in [`hint.markdown`](#markdown) (the optional
+`hint[markdown]` extra) instead: it escapes raw HTML in the input by default, so it stays safe
+on untrusted text, and returns `RawHtml` for you.
 
 ### Markdown
 
