@@ -1,5 +1,30 @@
 # Changelog
 
+## [2.0.0](https://github.com/Odalrick/hint/compare/hint-html-v1.0.0...hint-html-v2.0.0) (2026-07-16)
+
+
+### ⚠ BREAKING CHANGES
+
+* **render:** coalesce render_stream to (run, hole) tuples ([#19](https://github.com/Odalrick/hint/issues/19))
+* **render:** replace render_html cross-product with a document node ([#18](https://github.com/Odalrick/hint/issues/18))
+
+### Features
+
+* **render:** async streaming driver over render_stream ([#17](https://github.com/Odalrick/hint/issues/17)) ([5c61f5a](https://github.com/Odalrick/hint/commit/5c61f5a2ce1d681e10f82a0cf11c43215eabbe44))
+* **render:** replace render_html cross-product with a document node ([#18](https://github.com/Odalrick/hint/issues/18)) ([2964806](https://github.com/Odalrick/hint/commit/296480692b306595697b663a79278ba68abfb197))
+* **render:** streaming render with holes (render_stream) ([#14](https://github.com/Odalrick/hint/issues/14)) ([ea2b1f6](https://github.com/Odalrick/hint/commit/ea2b1f6486e12496448a15eb7e36dabbdac1e16a))
+
+
+### Bug Fixes
+
+* **render:** coalesce render_stream to (run, hole) tuples ([#19](https://github.com/Odalrick/hint/issues/19)) ([8ee3809](https://github.com/Odalrick/hint/commit/8ee3809d70aa97b5dc8c06bbba062b22fb7af6ed))
+
+
+### Documentation
+
+* correct post-streaming drift; keep design specs in git history ([#20](https://github.com/Odalrick/hint/issues/20)) ([b74fb47](https://github.com/Odalrick/hint/commit/b74fb473a648f37655016103a496e924228277ea))
+* correct release-please note now that the release-as pin is gone ([#16](https://github.com/Odalrick/hint/issues/16)) ([d916150](https://github.com/Odalrick/hint/commit/d916150a80a111b7c54e148b6846955590e56b1f))
+
 ## 1.0.0 (2026-07-11)
 
 
