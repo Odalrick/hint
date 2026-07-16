@@ -127,10 +127,10 @@ A `document` node is only valid at the top of the tree — nesting one is a type
 
 For pages whose content is expensive to produce (slow API calls, large lists), render
 incrementally instead of building the whole string first. `render_stream` is a synchronous
-**co-generator**: it yields HTML chunks as `str`, and yields a `hint.Hole` when it reaches a
-named placeholder. The consumer sends back a
-`list[ElementOrStr]` (which includes `Hole`, so a fill can itself contain unfilled holes) for
-that hole, which is spliced in — nested holes and all.
+**co-generator**: each item is a `(run, hole)` tuple — the coalesced HTML run (a `str`) up to the
+next named placeholder, paired with that `hint.Hole` (or `None` for the final run). The consumer
+emits `run`, then, for a non-`None` hole, sends back a `list[ElementOrStr]` fill (which may itself
+contain unfilled holes, spliced in — nested holes and all).
 
 ```python
 page = hint.tbody([hint.hole("rows")], {})
@@ -143,14 +143,13 @@ generator = hint.render_stream(page)
 to_send = None
 while True:
     try:
-        item = generator.send(to_send)   # first call primes with None
+        run, hole = generator.send(to_send)   # first call primes with None
     except StopIteration:
         break
+    emit(run)                            # the coalesced str run — write it to the socket
     to_send = None
-    if isinstance(item, hint.Hole):
-        to_send = build_rows(item.name)  # a list of <tr> elements
-    else:
-        emit(item)                       # a str chunk — write it to the socket
+    if hole is not None:
+        to_send = build_rows(hole.name)  # a list of <tr> elements ([] leaves it empty)
 ```
 
 `hint` stays synchronous. Because the loop is yours, an async consumer (FastAPI
