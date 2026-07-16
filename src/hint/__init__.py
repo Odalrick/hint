@@ -27,11 +27,11 @@ from hint._core import (
     document as document,
     element as element,
     hole as hole,
-    render as render,
     render_stream as render_stream,
     style as style,
     void_element as _void_element,
 )
+from hint._helper import render as render
 from hint._markdown import markdown as markdown
 
 # The HTML Living Standard element vocabulary, one constructor per tag, by category.
