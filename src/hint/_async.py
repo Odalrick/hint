@@ -16,6 +16,7 @@ from hint._core import (
     Element,
     ElementOrStr,
     Hole,
+    Renderable,
     StreamItem,
     render_html_stream,
     render_stream,
@@ -73,7 +74,7 @@ async def _drive(
         await asyncio.gather(*tasks.values(), return_exceptions=True)
 
 
-def render_stream_async(node: ElementOrStr, fills: Fills) -> AsyncGenerator[str]:
+def render_stream_async(node: Renderable, fills: Fills) -> AsyncGenerator[str]:
     """Async-drive :func:`render_stream`, filling holes from ``fills`` in parallel.
 
     Dispatches every awaitable in ``fills`` up front, then walks ``node`` emitting
