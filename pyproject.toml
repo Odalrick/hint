@@ -102,3 +102,9 @@ source_modules = ["hint"]
 forbidden_modules = ["markdown_it"]
 allow_indirect_imports = true
 ignore_imports = ["hint._markdown -> markdown_it"]
+
+[[tool.importlinter.contracts]]
+name = "The pure core stays synchronous (no asyncio)"
+type = "forbidden"
+source_modules = ["hint._core"]
+forbidden_modules = ["asyncio"]
