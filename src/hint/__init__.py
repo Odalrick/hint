@@ -13,10 +13,7 @@ a new one in a single line — ``figure: Node = element("figure")`` — with no 
 no registry. Obsolete elements and the SVG/MathML vocabularies are out of scope.
 """
 
-from hint._async import (
-    render_html_stream_async as render_html_stream_async,
-    render_stream_async as render_stream_async,
-)
+from hint._async import render_stream_async as render_stream_async
 from hint._core import (
     Document as Document,
     Element as Element,
@@ -31,8 +28,6 @@ from hint._core import (
     element as element,
     hole as hole,
     render as render,
-    render_html as render_html,
-    render_html_stream as render_html_stream,
     render_stream as render_stream,
     style as style,
     void_element as _void_element,

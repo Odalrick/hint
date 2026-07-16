@@ -173,22 +173,3 @@ def render(node: Renderable) -> str:
             raise ValueError(message)  # noqa: TRY004
         parts.append(item)
     return "".join(parts)
-
-
-def render_html(root: Element) -> str:
-    """Render a full ``<html>`` document with the doctype line prepended."""
-    if root.name != "html":
-        message = "render_html requires an <html> root element"
-        raise ValueError(message)
-    return f"<!DOCTYPE html>\n{render(root)}"
-
-
-def render_html_stream(
-    root: Element,
-) -> Generator[StreamItem, list[ElementOrStr] | None]:
-    """Stream a full ``<html>`` document, doctype first, suspending at holes."""
-    if root.name != "html":
-        message = "render_html_stream requires an <html> root element"
-        raise ValueError(message)
-    yield "<!DOCTYPE html>\n"
-    yield from render_stream(root)

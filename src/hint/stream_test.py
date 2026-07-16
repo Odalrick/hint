@@ -11,7 +11,6 @@ from hint import (
     element,
     hole,
     render,
-    render_html_stream,
     render_stream,
 )
 
@@ -110,40 +109,6 @@ def test_nested_hole_in_sent_content_is_fillable() -> None:
         "inner": [element("span")(["deep"], {})],
     }
     assert drive(tree, fills) == "<section><div><span>deep</span></div></section>"
-
-
-def drive_html(root: Element, fills: dict[str, list[ElementOrStr]]) -> str:
-    """Drive render_html_stream to completion, filling each hole from fills."""
-    generator = render_html_stream(root)
-    parts: list[str] = []
-    to_send: list[ElementOrStr] | None = None
-    while True:
-        try:
-            item = generator.send(to_send)
-        except StopIteration:
-            break
-        to_send = None
-        if isinstance(item, Hole):
-            to_send = fills.get(item.name, [])
-        else:
-            parts.append(item)
-    return "".join(parts)
-
-
-def test_html_stream_prepends_exactly_one_doctype() -> None:
-    items = list(render_html_stream(element("html")([], {})))
-    assert items == ["<!DOCTYPE html>\n", "<html>", "</html>"]
-
-
-def test_html_stream_rejects_a_non_html_root() -> None:
-    with pytest.raises(ValueError, match="html"):
-        list(render_html_stream(element("div")([], {})))
-
-
-def test_html_stream_fills_holes_in_the_body() -> None:
-    page = element("html")([element("body")([hole("main")], {})], {})
-    filled = drive_html(page, {"main": [element("h1")(["Home"], {})]})
-    assert filled == "<!DOCTYPE html>\n<html><body><h1>Home</h1></body></html>"
 
 
 def test_stream_self_closes_a_void_element_with_escaped_attrs() -> None:

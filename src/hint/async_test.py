@@ -5,13 +5,11 @@ from contextlib import aclosing
 import pytest
 
 from hint import (
-    Element,
     ElementOrStr,
     Renderable,
     document,
     element,
     hole,
-    render_html_stream_async,
     render_stream_async,
 )
 
@@ -199,30 +197,6 @@ def test_early_break_cancels_outstanding_tasks() -> None:
         assert cancelled.is_set()
 
     asyncio.run(scenario())
-
-
-def collect_html(root: Element, fills: dict[str, Awaitable[list[ElementOrStr]]]) -> str:
-    async def drain() -> str:
-        return "".join([c async for c in render_html_stream_async(root, fills)])
-
-    return asyncio.run(drain())
-
-
-def test_html_async_prepends_doctype_and_fills_the_body() -> None:
-    async def main() -> list[ElementOrStr]:
-        return [element("h1")(["Home"], {})]
-
-    page = element("html")([element("body")([hole("main")], {})], {})
-    expected = "<!DOCTYPE html>\n<html><body><h1>Home</h1></body></html>"
-    assert collect_html(page, {"main": main()}) == expected
-
-
-def test_html_async_rejects_a_non_html_root() -> None:
-    async def scenario() -> list[str]:
-        return [c async for c in render_html_stream_async(element("div")([], {}), {})]
-
-    with pytest.raises(ValueError, match="html"):
-        asyncio.run(scenario())
 
 
 def test_document_streams_doctype_first_over_async() -> None:
