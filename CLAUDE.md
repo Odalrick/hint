@@ -1,8 +1,9 @@
 # hint — project conventions
 
 `hint` is a small, pure-Python library for building HTML as a tree of description values and
-rendering it to a string once. *hint is not templating.* Start with `README.md` for the API and
-`docs/superpowers/specs/2026-07-10-hint-extraction-design.md` for the design rationale.
+rendering it to a string once. *hint is not templating.* Start with `README.md` for the API. The
+design specs and plans are not kept in the checkout — they live in git history under
+`docs/superpowers/` (removed from the working tree once merged; recover with `git log --all -- docs/`).
 
 ## Commands
 
@@ -79,9 +80,17 @@ untrusted input.
 - **release-please** drives versioning/changelog/releases from conventional commits (`fix:` → patch,
   `feat:` → minor, `!` / `BREAKING CHANGE` → major). The `release-as` pin that forced the initial
   `1.0.0` was removed once 1.0.0 shipped, so versions now bump normally from commit types.
+  Do **not** hand-edit `CHANGELOG.md` or the version — release-please regenerates them in its open
+  release PR. To get a doc/feature fix into the next release, land it on `main` and let that PR pick
+  it up; merge the release PR to cut the version.
+- Don't name an unreleased version by a guessed number (in docs, plans, or commit bodies) — say **"the
+  next version"** or **"an upcoming release"**. The number is release-please's to compute from the
+  commits, and guesses go stale: the async driver was planned as `1.1.0`, then a discovered API break
+  turned it into `2.0.0`.
 
 ## Related
 
 - `~/Config/claude/html-rendering-pattern.md` — the broader server-rendered-HTML pattern `hint` serves.
-- `BACKLOG.md` — deferred work; the headline is **1.1.0 streaming** (`render_stream`), which `render` is
-  already factored for.
+- `BACKLOG.md` — deferred, uncommitted future work. Streaming (`render_stream`, `render_stream_async`)
+  and the `document` node have since shipped; the near-term milestone is now **publishing `hint-html` to
+  PyPI** (which also adds the mypy compatibility gate).

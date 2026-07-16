@@ -1,7 +1,8 @@
 # Backlog
 
 Possible future work for `hint`. One section per idea — none of it is committed to, and the
-list is expected to churn. See `docs/superpowers/specs/` for designs once an item is picked up.
+list is expected to churn. Designs are written as specs once an item is picked up; they are kept in
+git history under `docs/superpowers/`, not in the checkout (`git log --all -- docs/`).
 
 ## Content negotiation
 
