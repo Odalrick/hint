@@ -158,7 +158,7 @@ while True:
 eager render cannot fill it.
 
 Wrapping the root in `document(...)` (see [Rendering](#rendering)) works the same way here — the
-doctype is simply the first chunk `render_stream` yields, before the rest of the tree.
+doctype simply opens the first run, coalesced with the tree up to the first hole.
 
 #### Async driver: parallel fetches, document order
 
