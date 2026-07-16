@@ -1,9 +1,8 @@
 from html import escape
 
 from hypothesis import given, strategies as st
-import pytest
 
-from hint import RawHtml, element, render, render_html, style
+from hint import RawHtml, document, element, render, style
 
 
 def test_renders_empty_element() -> None:
@@ -53,15 +52,8 @@ def test_style_emits_css_verbatim() -> None:
     assert rendered == "<style>a > b { color: red }</style>"
 
 
-def test_render_html_prepends_exactly_one_doctype() -> None:
-    out = render_html(element("html")([], {}))
-    assert out == "<!DOCTYPE html>\n<html></html>"
-    assert out.count("<!DOCTYPE html>") == 1
-
-
-def test_render_html_rejects_a_non_html_root() -> None:
-    with pytest.raises(ValueError, match="html"):
-        render_html(element("div")([], {}))
+def test_document_renders_doctype_then_child() -> None:
+    assert render(document(element("html")([], {}))) == "<!DOCTYPE html>\n<html></html>"
 
 
 @given(st.text())

@@ -1,10 +1,9 @@
 """Async driver for the sync streaming co-generator.
 
-Internal module. A consumer-side convenience over :func:`hint._core.render_stream`
-and :func:`hint._core.render_html_stream`: dispatch every known hole's awaitable up
-front as a task (so total latency is ``max`` not ``sum``), then drive the sync walk,
-awaiting each hole's result as it is reached and emitting ``str`` chunks in document
-order. asyncio only.
+Internal module. A consumer-side convenience over :func:`hint._core.render_stream`:
+dispatch every known hole's awaitable up front as a task (so total latency is ``max``
+not ``sum``), then drive the sync walk, awaiting each hole's result as it is reached
+and emitting ``str`` chunks in document order. asyncio only.
 
 Import these names from the package boundary (``hint``), not from here.
 """
@@ -13,11 +12,10 @@ import asyncio
 from collections.abc import AsyncGenerator, Awaitable, Generator, Mapping
 
 from hint._core import (
-    Element,
     ElementOrStr,
     Hole,
+    Renderable,
     StreamItem,
-    render_html_stream,
     render_stream,
 )
 
@@ -73,7 +71,7 @@ async def _drive(
         await asyncio.gather(*tasks.values(), return_exceptions=True)
 
 
-def render_stream_async(node: ElementOrStr, fills: Fills) -> AsyncGenerator[str]:
+def render_stream_async(node: Renderable, fills: Fills) -> AsyncGenerator[str]:
     """Async-drive :func:`render_stream`, filling holes from ``fills`` in parallel.
 
     Dispatches every awaitable in ``fills`` up front, then walks ``node`` emitting
@@ -83,11 +81,3 @@ def render_stream_async(node: ElementOrStr, fills: Fills) -> AsyncGenerator[str]
     Equal hole names resolve to the exact same fill data.
     """
     return _drive(render_stream(node), fills)
-
-
-def render_html_stream_async(root: Element, fills: Fills) -> AsyncGenerator[str]:
-    """Async-drive :func:`render_html_stream`.
-
-    Emits the doctype first, then behaves exactly as :func:`render_stream_async`.
-    """
-    return _drive(render_html_stream(root), fills)

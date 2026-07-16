@@ -28,7 +28,7 @@ page = hint.html(
     {},
 )
 
-hint.render_html(page)
+hint.render(hint.document(page))
 # '<!DOCTYPE html>\n<html><head><title>Home</title></head>...'
 ```
 
@@ -109,15 +109,26 @@ safe to use as `hint.input(...)` (qualified access shadows nothing).
 
 - `hint.render(node)` → HTML string. Escapes text and attribute values; self-closes void
   elements (`<br/>`, `<img .../>`); passes `RawHtml` through verbatim.
-- `hint.render_html(root)` → prepends `<!DOCTYPE html>` and requires the root to be `<html>`
-  (raises `ValueError` otherwise).
+
+For a full document, wrap the `<html>` root in a `document(...)` node — it emits
+`<!DOCTYPE html>` first. Because it is just a node, the *same* `render`,
+`render_stream`, and `render_stream_async` handle it — there is no separate
+`_html` function:
+
+```python
+render(document(hint.html([...], {})))                       # eager
+render_stream(document(hint.html([...], {})))                # sync stream
+render_stream_async(document(hint.html([...], {})), fills)   # async
+```
+
+A `document` node is only valid at the top of the tree — nesting one is a type error.
 
 ### Streaming
 
 For pages whose content is expensive to produce (slow API calls, large lists), render
-incrementally instead of building the whole string first. `render_stream` and
-`render_html_stream` are synchronous **co-generators**: they yield HTML chunks as `str`,
-and yield a `hint.Hole` when they reach a named placeholder. The consumer sends back a
+incrementally instead of building the whole string first. `render_stream` is a synchronous
+**co-generator**: it yields HTML chunks as `str`, and yields a `hint.Hole` when it reaches a
+named placeholder. The consumer sends back a
 `list[ElementOrStr]` (which includes `Hole`, so a fill can itself contain unfilled holes) for
 that hole, which is spliced in — nested holes and all.
 
@@ -144,17 +155,17 @@ while True:
 
 `hint` stays synchronous. Because the loop is yours, an async consumer (FastAPI
 `StreamingResponse`) is free to `await` slow work between a hole and its `send`. The eager
-`render` / `render_html` are unchanged; calling `render` on a tree that contains a hole
-raises `ValueError`, since an eager render cannot fill it.
+`render` is unchanged; calling it on a tree that contains a hole raises `ValueError`, since an
+eager render cannot fill it.
 
-`render_html_stream(root)` is the full-document form — it emits `<!DOCTYPE html>` first and
-requires an `<html>` root, otherwise identical.
+Wrapping the root in `document(...)` (see [Rendering](#rendering)) works the same way here — the
+doctype is simply the first chunk `render_stream` yields, before the rest of the tree.
 
 #### Async driver: parallel fetches, document order
 
-`render_stream_async` / `render_html_stream_async` encapsulate the high-value pattern: given a
-`name -> awaitable` mapping, they dispatch every known hole's fetch **up front** (so total latency
-is `max`, not `sum`), then drive the walk and `await` each hole as it is reached, yielding `str`
+`render_stream_async` encapsulates the high-value pattern: given a
+`name -> awaitable` mapping, it dispatches every known hole's fetch **up front** (so total latency
+is `max`, not `sum`), then drives the walk and `await`s each hole as it is reached, yielding `str`
 chunks in document order. asyncio only.
 
 ```python
@@ -163,7 +174,7 @@ fills = {
     "rows": fetch_rows(),
     "footer": fetch_footer(),
 }
-async for chunk in hint.render_html_stream_async(page, fills):
+async for chunk in hint.render_stream_async(page, fills):
     await response.write(chunk)
 ```
 

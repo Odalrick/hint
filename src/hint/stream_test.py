@@ -6,10 +6,11 @@ from hint import (
     ElementOrStr,
     Hole,
     RawHtml,
+    Renderable,
+    document,
     element,
     hole,
     render,
-    render_html_stream,
     render_stream,
 )
 
@@ -63,7 +64,7 @@ def test_stream_surfaces_the_hole_as_a_hole_item() -> None:
     assert items == ["<div>", Hole(name="rows"), "</div>"]
 
 
-def drive(node: ElementOrStr, fills: dict[str, list[ElementOrStr]]) -> str:
+def drive(node: Renderable, fills: dict[str, list[ElementOrStr]]) -> str:
     """Drive render_stream to completion, filling each hole from `fills` by name."""
     generator = render_stream(node)
     parts: list[str] = []
@@ -110,40 +111,6 @@ def test_nested_hole_in_sent_content_is_fillable() -> None:
     assert drive(tree, fills) == "<section><div><span>deep</span></div></section>"
 
 
-def drive_html(root: Element, fills: dict[str, list[ElementOrStr]]) -> str:
-    """Drive render_html_stream to completion, filling each hole from fills."""
-    generator = render_html_stream(root)
-    parts: list[str] = []
-    to_send: list[ElementOrStr] | None = None
-    while True:
-        try:
-            item = generator.send(to_send)
-        except StopIteration:
-            break
-        to_send = None
-        if isinstance(item, Hole):
-            to_send = fills.get(item.name, [])
-        else:
-            parts.append(item)
-    return "".join(parts)
-
-
-def test_html_stream_prepends_exactly_one_doctype() -> None:
-    items = list(render_html_stream(element("html")([], {})))
-    assert items == ["<!DOCTYPE html>\n", "<html>", "</html>"]
-
-
-def test_html_stream_rejects_a_non_html_root() -> None:
-    with pytest.raises(ValueError, match="html"):
-        list(render_html_stream(element("div")([], {})))
-
-
-def test_html_stream_fills_holes_in_the_body() -> None:
-    page = element("html")([element("body")([hole("main")], {})], {})
-    filled = drive_html(page, {"main": [element("h1")(["Home"], {})]})
-    assert filled == "<!DOCTYPE html>\n<html><body><h1>Home</h1></body></html>"
-
-
 def test_stream_self_closes_a_void_element_with_escaped_attrs() -> None:
     items = list(render_stream(element("img")([], {"src": "/a<b>"})))
     assert items == ['<img src="/a&lt;b&gt;"/>']
@@ -165,3 +132,14 @@ def test_bare_hole_in_a_fill_list_is_itself_filled() -> None:
 
 def test_hole_as_the_top_level_node_is_filled() -> None:
     assert drive(hole("x"), {"x": [element("p")(["hi"], {})]}) == "<p>hi</p>"
+
+
+def test_document_streams_doctype_then_child() -> None:
+    items = list(render_stream(document(element("html")([], {}))))
+    assert items == ["<!DOCTYPE html>\n", "<html>", "</html>"]
+
+
+def test_document_with_a_hole_in_the_body_is_filled() -> None:
+    page = document(element("html")([element("body")([hole("main")], {})], {}))
+    filled = drive(page, {"main": [element("h1")(["Home"], {})]})
+    assert filled == "<!DOCTYPE html>\n<html><body><h1>Home</h1></body></html>"

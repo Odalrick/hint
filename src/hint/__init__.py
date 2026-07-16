@@ -13,27 +13,25 @@ a new one in a single line — ``figure: Node = element("figure")`` — with no 
 no registry. Obsolete elements and the SVG/MathML vocabularies are out of scope.
 """
 
-from hint._async import (
-    render_html_stream_async as render_html_stream_async,
-    render_stream_async as render_stream_async,
-)
+from hint._async import render_stream_async as render_stream_async
 from hint._core import (
+    Document as Document,
     Element as Element,
     ElementOrStr as ElementOrStr,
     Hole as Hole,
     Node as Node,
     RawHtml as RawHtml,
+    Renderable as Renderable,
     StreamItem as StreamItem,
     VoidNode as VoidNode,
+    document as document,
     element as element,
     hole as hole,
-    render as render,
-    render_html as render_html,
-    render_html_stream as render_html_stream,
     render_stream as render_stream,
     style as style,
     void_element as _void_element,
 )
+from hint._helper import render as render
 from hint._markdown import markdown as markdown
 
 # The HTML Living Standard element vocabulary, one constructor per tag, by category.

@@ -23,11 +23,15 @@ and holds no implementation logic (the thin `tag: Node = element("tag")` lines c
 See the "boundary package" rule in add-comply's CLAUDE.md.
 
 - `hint/_core.py` — implementation: `RawHtml`, `Element`, `ElementOrStr`, `element`/`Node`,
-  `void_element`/`VoidNode`, `style`, the void-element set, `render`, `render_html`.
+  `void_element`/`VoidNode`, `style`, `Document`/`document`/`Renderable`, the void-element set,
+  `render_stream`. No longer holds `render` (moved to `_helper.py`, see below) or the removed
+  full-document renderer (superseded by the `document` node).
+- `hint/_helper.py` — conveniences over the core (`render`, and more over time). Imports
+  `hint._core`, never the package boundary. The public API re-exports them flat.
 - `hint/_markdown.py` — the optional `markdown` binding. Imports `hint._core`, never the package
   boundary, so there is no import cycle.
-- `hint/_async.py` — the optional async driver (`render_stream_async`, `render_html_stream_async`).
-  asyncio-only; imports `hint._core`, never the package boundary. Keeps the sync core sync.
+- `hint/_async.py` — the optional async driver (`render_stream_async`). asyncio-only; imports
+  `hint._core`, never the package boundary. Keeps the sync core sync.
 - Internal modules are imported from the boundary, not from outside the package. `import-linter`
   guards this and the pure-core invariant.
 
