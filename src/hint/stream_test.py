@@ -50,8 +50,18 @@ def _hole_free_trees() -> st.SearchStrategy[ElementOrStr]:
 
 @given(_hole_free_trees())
 def test_stream_joins_to_the_eager_render(tree: ElementOrStr) -> None:
-    streamed = "".join(part for part in render_stream(tree) if isinstance(part, str))
+    streamed = "".join(run for run, _hole in render_stream(tree))
     assert streamed == render(tree)
+
+
+def test_render_stream_pairs_each_run_with_its_hole() -> None:
+    tree = element("div")(["a", hole("x"), "b"], {})
+    assert list(render_stream(tree)) == [("<div>a", Hole(name="x")), ("b</div>", None)]
+
+
+def test_render_stream_coalesces_a_hole_free_tree_to_one_tuple() -> None:
+    tree = element("div")(["a", element("span")(["b"], {}), "c"], {})
+    assert list(render_stream(tree)) == [("<div>a<span>b</span>c</div>", None)]
 
 
 def test_render_raises_on_an_unresolved_hole() -> None:
@@ -59,9 +69,9 @@ def test_render_raises_on_an_unresolved_hole() -> None:
         render(element("div")([hole("pr-list")], {}))
 
 
-def test_stream_surfaces_the_hole_as_a_hole_item() -> None:
+def test_stream_pairs_a_run_with_its_hole() -> None:
     items = list(render_stream(element("div")([hole("rows")], {})))
-    assert items == ["<div>", Hole(name="rows"), "</div>"]
+    assert items == [("<div>", Hole(name="rows")), ("</div>", None)]
 
 
 def drive(node: Renderable, fills: dict[str, list[ElementOrStr]]) -> str:
@@ -71,14 +81,13 @@ def drive(node: Renderable, fills: dict[str, list[ElementOrStr]]) -> str:
     to_send: list[ElementOrStr] | None = None
     while True:
         try:
-            item = generator.send(to_send)
+            run, hole = generator.send(to_send)
         except StopIteration:
             break
+        parts.append(run)
         to_send = None
-        if isinstance(item, Hole):
-            to_send = fills.get(item.name, [])
-        else:
-            parts.append(item)
+        if hole is not None:
+            to_send = fills.get(hole.name, [])
     return "".join(parts)
 
 
@@ -113,7 +122,7 @@ def test_nested_hole_in_sent_content_is_fillable() -> None:
 
 def test_stream_self_closes_a_void_element_with_escaped_attrs() -> None:
     items = list(render_stream(element("img")([], {"src": "/a<b>"})))
-    assert items == ['<img src="/a&lt;b&gt;"/>']
+    assert items == [('<img src="/a&lt;b&gt;"/>', None)]
 
 
 def test_fill_content_is_escaped() -> None:
@@ -136,7 +145,7 @@ def test_hole_as_the_top_level_node_is_filled() -> None:
 
 def test_document_streams_doctype_then_child() -> None:
     items = list(render_stream(document(element("html")([], {}))))
-    assert items == ["<!DOCTYPE html>\n", "<html>", "</html>"]
+    assert items == [("<!DOCTYPE html>\n<html></html>", None)]
 
 
 def test_document_with_a_hole_in_the_body_is_filled() -> None:
