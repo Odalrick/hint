@@ -185,13 +185,11 @@ def test_early_break_cancels_outstanding_tasks() -> None:
         # the loop tears down) pins the cleanup to the driver itself.
         async with aclosing(render_stream_async(tree, {"slow": slow()})) as chunks:
             async for chunk in chunks:
-                if chunk == "<div>":
-                    # The sync walk emits "<div>" without ever awaiting, so the
-                    # event loop hasn't yet given "slow" its first turn. Yield
-                    # once so it actually enters its try/await before we break
-                    # and trigger cancellation — otherwise cancel() lands on a
-                    # not-yet-started task and CancelledError never reaches the
-                    # except clause below.
+                if chunk == "<div>x":
+                    # render_stream coalesces "<div>" + "x" into one run before the
+                    # "slow" hole, so this is the first (and only) chunk emitted before
+                    # the driver would await slow. Yield once so slow actually starts,
+                    # then break to trigger aclose()/cancellation.
                     await asyncio.sleep(0)
                     break
         assert cancelled.is_set()

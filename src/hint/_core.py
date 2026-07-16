@@ -27,7 +27,7 @@ class Hole:
 
 
 type ElementOrStr = Element | str | RawHtml | Hole
-type StreamItem = str | Hole
+type StreamItem = tuple[str, Hole | None]
 type Renderable = ElementOrStr | Document
 
 
@@ -121,17 +121,18 @@ _VOID_ELEMENTS = frozenset(
 )
 
 
-def render_stream(
+def _walk(
     node: Renderable,
-) -> Generator[StreamItem, list[ElementOrStr] | None]:
-    """Stream a description tree as HTML chunks, suspending at each :class:`Hole`.
+) -> Generator[str | Hole, list[ElementOrStr] | None]:
+    """Recursively stream a tree as fine-grained ``str`` / ``Hole`` items.
 
-    Yields ``str`` output; yields a :class:`Hole` when it reaches a placeholder and
-    (in the filled form) splices back the ``list[ElementOrStr]`` the consumer sends.
+    Internal to the streaming layer: :func:`render_stream` coalesces these into
+    ``(run, hole)`` tuples. Yields a :class:`Hole` at each placeholder and splices
+    back the ``list[ElementOrStr]`` the consumer sends.
     """
     if isinstance(node, Document):
         yield "<!DOCTYPE html>\n"
-        yield from render_stream(node.child)
+        yield from _walk(node.child)
         return
     if isinstance(node, RawHtml):
         yield node.content
@@ -140,7 +141,7 @@ def render_stream(
         filling = yield node
         if filling:  # None (priming/advance artifact) or [] both render empty
             for child in filling:
-                yield from render_stream(child)
+                yield from _walk(child)
         return
     if isinstance(node, str):
         yield escape(node)
@@ -154,5 +155,34 @@ def render_stream(
         return
     yield f"<{node.name}{attributes}>"
     for child in node.content:
-        yield from render_stream(child)
+        yield from _walk(child)
     yield f"</{node.name}>"
+
+
+def render_stream(
+    node: Renderable,
+) -> Generator[StreamItem, list[ElementOrStr] | None]:
+    """Stream a tree as ``(run, hole)`` tuples.
+
+    Each item is the coalesced HTML run up to the next placeholder, paired with that
+    :class:`Hole` — or ``(run, None)`` for the final run. The consumer emits ``run``
+    and, when ``hole`` is not ``None``, sends back the ``list[ElementOrStr]`` fill
+    (spliced through the same walk, nested holes and all).
+    """
+    walk = _walk(node)
+    buffer: list[str] = []
+    to_inner: list[ElementOrStr] | None = None
+    while True:
+        try:
+            item = walk.send(to_inner)
+        except StopIteration:
+            break
+        to_inner = None
+        if isinstance(item, Hole):
+            fill = yield ("".join(buffer), item)
+            buffer.clear()
+            to_inner = fill
+        else:
+            buffer.append(item)
+    if buffer:
+        yield ("".join(buffer), None)

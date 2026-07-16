@@ -13,7 +13,6 @@ from collections.abc import AsyncGenerator, Awaitable, Generator, Mapping
 
 from hint._core import (
     ElementOrStr,
-    Hole,
     Renderable,
     StreamItem,
     render_stream,
@@ -56,14 +55,14 @@ async def _drive(
     try:
         while True:
             try:
-                item = generator.send(to_send)
+                run, hole = generator.send(to_send)
             except StopIteration:
                 break
+            if run:
+                yield run
             to_send = None
-            if isinstance(item, Hole):
-                to_send = await _resolve(item.name, fills, tasks, results)
-            else:
-                yield item
+            if hole is not None:
+                to_send = await _resolve(hole.name, fills, tasks, results)
     finally:
         for task in tasks.values():
             if not task.done():
