@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.1](https://github.com/Odalrick/hint/compare/hint-html-v2.0.0...hint-html-v2.0.1) (2026-10-06)
+
+
+### Documentation
+
+* record three tables as evidence for a builder, not a request ([#22](https://github.com/Odalrick/hint/issues/22)) ([4d56bb4](https://github.com/Odalrick/hint/commit/4d56bb45e188efa55586e73ef478d6d6d78ac6f9))
+
 ## [2.0.0](https://github.com/Odalrick/hint/compare/hint-html-v1.0.0...hint-html-v2.0.0) (2026-07-16)
 
 
