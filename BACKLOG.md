@@ -66,3 +66,15 @@ A title names a bookmark, a history entry and a tab group, so it is read far fro
 has to carry its own context. `X-Change™ Life` says nothing about which tool it belongs to;
 `X-Change™ Life — Game Library` does. Cheap to get right at the point a page is first written,
 and easy to leave undone across every page of a tool.
+
+## A table builder — evidence, not a request
+
+The game library in `notes-jubilant-guacamole` builds three tables the same way: a `thead` of
+column names, a `tbody` of rows, a class on the `table` — the listing of games, a game's
+comments, and the tag usage page. Three repetitions is the usual threshold for extracting
+something.
+
+Not taken up there, deliberately. A table builder is easy and pleasant to write, and has been
+written a few times before; that is exactly why it needs a justification beyond "it repeats"
+before it is written again. Recorded so the repetitions count towards one, should a fourth
+consumer or a real need — sorting, a column definition shared with a JSON view — turn up.
