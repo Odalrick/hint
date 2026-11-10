@@ -78,3 +78,15 @@ Not taken up there, deliberately. A table builder is easy and pleasant to write,
 written a few times before; that is exactly why it needs a justification beyond "it repeats"
 before it is written again. Recorded so the repetitions count towards one, should a fourth
 consumer or a real need — sorting, a column definition shared with a JSON view — turn up.
+
+## A `safe_a` that refuses a dangerous `href`
+
+`a` escapes its attributes but takes any address, so a `javascript:` URL from stored data
+renders as a working link. The game library in `notes-jubilant-guacamole` hit this: its route
+refused anything but http(s) on the way in, but the page trusted the log, which other machines,
+hand edits and importers also write. The fix was a scheme check in the page as well as the route —
+the same check twice, and every page that links to a recorded address has to remember it.
+
+A `safe_a` that validates the address itself — an allow-list of schemes, relative URLs passing —
+would make forgetting impossible wherever it is used. What it does with a refused address (render
+the text without a link, or raise) is the open question.
