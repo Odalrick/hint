@@ -83,3 +83,14 @@ from a record, say). Found while designing `safe_a`, whose `href` check it would
 refuse — not escape — a name outside HTML's attribute name grammar (no whitespace, `"`, `'`, `>`, `/`, `=`, or
 controls), since no escaping of a name is meaningful; whether refusing means raising at construction or at render is the
 open question.
+
+## A `safe_a` that refuses a dangerous `href`
+
+`a` escapes its attributes but takes any address, so a `javascript:` URL from stored data renders as a working link. The
+game library in `notes-jubilant-guacamole` hit this: its route refused anything but http(s) on the way in, but the page
+trusted the log, which other machines, hand edits and importers also write. The fix was a scheme check in the page as
+well as the route — the same check twice, and every page that links to a recorded address has to remember it.
+
+A `safe_a` that validates the address itself — an allow-list of schemes, relative URLs passing — would make forgetting
+impossible wherever it is used. What it does with a refused address (render the text without a link, or raise) is the
+open question.
