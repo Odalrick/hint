@@ -201,6 +201,21 @@ For Markdown, don't render it yourself and wrap the result in `RawHtml` — that
 for the built-in [`hint.markdown`](#markdown) (the optional `hint[markdown]` extra) instead: it escapes raw HTML in the
 input by default, so it stays safe on untrusted text, and returns `RawHtml` for you.
 
+### Links to stored addresses
+
+Escaping keeps an address inside its attribute, but `hint.a` still links to whatever it is given — a `javascript:`
+address from stored data renders as a working link. When the address comes from data someone else may have written, use
+`hint.safe_a` instead. It takes the same arguments as `a` and links only to an `http` or `https` address with a host;
+anything else, or no `href` at all, renders the children in a `span` without a link:
+
+```python
+hint.safe_a(["Wikipedia"], {"href": "https://en.wikipedia.org/"})  # <a href="https://...">
+hint.safe_a(["Wikipedia"], {"href": "javascript:alert(1)"})        # <span>Wikipedia</span>
+```
+
+The rendered `href` is rebuilt from the parsed address rather than copied from the stored one, so what reaches the page
+is exactly what was checked.
+
 ### Markdown
 
 With the `markdown` extra installed, `hint.markdown(text)` renders CommonMark (tables enabled) to `RawHtml`:

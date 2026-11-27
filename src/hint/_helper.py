@@ -1,12 +1,16 @@
-"""Conveniences built on the core render/stream vocabulary.
+"""Conveniences built on the core vocabulary.
 
-Internal module. These are *just* helpers over :func:`hint._core.render_stream` —
-the public boundary re-exports them flat, so callers do not see the distinction, but
-internally they live here, apart from the core vocabulary, and this module is expected
-to grow. Import these names from the package boundary (``hint``), not from here.
+Internal module. These are *just* helpers over :mod:`hint._core` — the public boundary
+re-exports them flat, so callers do not see the distinction, but internally they live
+here, apart from the core vocabulary, and this module is expected to grow. Import these
+names from the package boundary (``hint``), not from here.
 """
 
-from hint._core import Renderable, render_stream
+from urllib.parse import urlsplit, urlunsplit
+
+from hint._core import Element, ElementOrStr, Renderable, element, render_stream
+
+_WEB_SCHEMES = frozenset({"http", "https"})
 
 
 def render(node: Renderable) -> str:
@@ -22,3 +26,22 @@ def render(node: Renderable) -> str:
             message = f"render() cannot resolve hole {hole.name!r}; use render_stream"
             raise ValueError(message)
     return "".join(parts)
+
+
+def safe_a(content: list[ElementOrStr], attrs: dict[str, str]) -> Element:
+    """Build an ``a`` that links only to a web page: ``http`` or ``https``, with a host.
+
+    For addresses from stored data that someone else may have written. The ``href`` is
+    parsed and the rendered one rebuilt from its parts, so the stored value never
+    reaches the page — only what the check judged. A refused or missing address
+    renders the children in a ``span`` with the other attributes, so a bad value
+    degrades to text rather than failing the page.
+    """
+    others = {name: value for name, value in attrs.items() if name != "href"}
+    try:
+        parts = urlsplit(attrs.get("href", ""))
+    except ValueError:
+        return element("span")(content, others)
+    if parts.scheme not in _WEB_SCHEMES or not parts.netloc:
+        return element("span")(content, others)
+    return element("a")(content, {**attrs, "href": urlunsplit(parts)})
