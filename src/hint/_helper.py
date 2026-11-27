@@ -35,13 +35,17 @@ def safe_a(content: list[ElementOrStr], attrs: dict[str, str]) -> Element:
     parsed and the rendered one rebuilt from its parts, so the stored value never
     reaches the page — only what the check judged. A refused or missing address
     renders the children in a ``span`` with the other attributes, so a bad value
-    degrades to text rather than failing the page.
+    degrades to text rather than failing the page. HTML attribute names ignore case,
+    so ``HREF`` is checked too, and two spellings of it are refused.
     """
-    others = {name: value for name, value in attrs.items() if name != "href"}
+    addresses = [value for name, value in attrs.items() if name.lower() == "href"]
+    others = {name: value for name, value in attrs.items() if name.lower() != "href"}
+    if len(addresses) != 1:
+        return element("span")(content, others)
     try:
-        parts = urlsplit(attrs.get("href", ""))
+        parts = urlsplit(addresses[0])
     except ValueError:
         return element("span")(content, others)
     if parts.scheme not in _WEB_SCHEMES or not parts.netloc:
         return element("span")(content, others)
-    return element("a")(content, {**attrs, "href": urlunsplit(parts)})
+    return element("a")(content, {**others, "href": urlunsplit(parts)})

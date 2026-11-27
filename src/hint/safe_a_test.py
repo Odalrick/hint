@@ -57,3 +57,18 @@ def test_any_address_renders_as_text_or_a_web_link(address: str) -> None:
     assert rendered == "<span></span>" or rendered.startswith(
         ('<a href="http://', '<a href="https://'),
     )
+
+
+def test_checks_an_href_key_in_any_case() -> None:
+    rendered = render(safe_a(["x"], {"HREF": "javascript:alert(1)"}))
+    assert rendered == "<span>x</span>"
+
+
+def test_links_an_href_key_in_any_case_by_its_rebuilt_form() -> None:
+    rendered = render(safe_a(["x"], {"HREF": "HTTPS://x.org/"}))
+    assert rendered == '<a href="https://x.org/">x</a>'
+
+
+def test_refuses_two_href_keys() -> None:
+    attrs = {"HREF": "javascript:alert(1)", "href": "https://x.org/"}
+    assert render(safe_a(["x"], attrs)) == "<span>x</span>"
