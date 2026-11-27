@@ -2,7 +2,7 @@ from html import escape
 
 from hypothesis import given, strategies as st
 
-from hint import RawHtml, document, element, render, style
+from hint import Element, RawHtml, document, element, render, style
 
 
 def test_renders_empty_element() -> None:
@@ -40,7 +40,9 @@ def test_void_element_self_closes() -> None:
 
 
 def test_attribute_names_are_escaped() -> None:
-    assert render(element("a")([], {'x"y': "v"})) == '<a x&quot;y="v"></a>'
+    # element() refuses such a name; an Element built directly still reaches render.
+    tree = Element(name="a", attrs={'x"y': "v"})
+    assert render(tree) == '<a x&quot;y="v"></a>'
 
 
 def test_non_void_element_always_has_a_closing_tag() -> None:
