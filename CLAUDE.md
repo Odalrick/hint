@@ -1,9 +1,9 @@
 # hint — project conventions
 
-`hint` is a small, pure-Python library for building HTML as a tree of description values and
-rendering it to a string once. *hint is not templating.* Start with `README.md` for the API. The
-design specs and plans are not kept in the checkout — they live in git history under
-`docs/superpowers/` (removed from the working tree once merged; recover with `git log --all -- docs/`).
+`hint` is a small, pure-Python library for building HTML as a tree of description values and rendering it to a string
+once. _hint is not templating._ Start with `README.md` for the API. The design specs and plans are not kept in the
+checkout — they live in git history under `docs/superpowers/` (removed from the working tree once merged; recover with
+`git log --all -- docs/`).
 
 ## Commands
 
@@ -19,78 +19,73 @@ Install as a dependency (until PyPI): `uv add "hint-html @ git+https://github.co
 
 ## Package structure — a re-export boundary
 
-`hint/__init__.py` is a **boundary**: it re-exports the public API and defines the tag constructors,
-and holds no implementation logic (the thin `tag: Node = element("tag")` lines count as re-exports).
-See the "boundary package" rule in add-comply's CLAUDE.md.
+`hint/__init__.py` is a **boundary**: it re-exports the public API and defines the tag constructors, and holds no
+implementation logic (the thin `tag: Node = element("tag")` lines count as re-exports). See the "boundary package" rule
+in add-comply's CLAUDE.md.
 
-- `hint/_core.py` — implementation: `RawHtml`, `Element`, `ElementOrStr`, `element`/`Node`,
-  `void_element`/`VoidNode`, `style`, `Document`/`document`/`Renderable`, the void-element set,
-  `render_stream`. No longer holds `render` (moved to `_helper.py`, see below) or the removed
-  full-document renderer (superseded by the `document` node).
-- `hint/_helper.py` — conveniences over the core (`render`, and more over time). Imports
-  `hint._core`, never the package boundary. The public API re-exports them flat.
-- `hint/_markdown.py` — the optional `markdown` binding. Imports `hint._core`, never the package
-  boundary, so there is no import cycle.
-- `hint/_async.py` — the optional async driver (`render_stream_async`). asyncio-only; imports
-  `hint._core`, never the package boundary. Keeps the sync core sync.
-- Internal modules are imported from the boundary, not from outside the package. `import-linter`
-  guards this and the pure-core invariant.
+- `hint/_core.py` — implementation: `RawHtml`, `Element`, `ElementOrStr`, `element`/`Node`, `void_element`/`VoidNode`,
+  `style`, `Document`/`document`/`Renderable`, the void-element set, `render_stream`. No longer holds `render` (moved to
+  `_helper.py`, see below) or the removed full-document renderer (superseded by the `document` node).
+- `hint/_helper.py` — conveniences over the core (`render`, and more over time). Imports `hint._core`, never the package
+  boundary. The public API re-exports them flat.
+- `hint/_markdown.py` — the optional `markdown` binding. Imports `hint._core`, never the package boundary, so there is
+  no import cycle.
+- `hint/_async.py` — the optional async driver (`render_stream_async`). asyncio-only; imports `hint._core`, never the
+  package boundary. Keeps the sync core sync.
+- Internal modules are imported from the boundary, not from outside the package. `import-linter` guards this and the
+  pure-core invariant.
 
 ## The calling convention
 
-- Normal elements: `tag([children], {attrs})` — both positional, both required, empty spelled
-  `div([], {})`. Deliberate and uniform; **do not** add keyword args or defaults.
-- **Void elements** (`br`, `img`, `input`, …) take **attrs only**: `br({})`. They are built by the
-  internal `void_element` factory (typed `VoidNode`) so passing children is a *type error*, not a
-  silent drop. HTML's void set is fixed, so there is no public way to add a void tag.
+- Normal elements: `tag([children], {attrs})` — both positional, both required, empty spelled `div([], {})`. Deliberate
+  and uniform; **do not** add keyword args or defaults.
+- **Void elements** (`br`, `img`, `input`, …) take **attrs only**: `br({})`. They are built by the internal
+  `void_element` factory (typed `VoidNode`) so passing children is a _type error_, not a silent drop. HTML's void set is
+  fixed, so there is no public way to add a void tag.
 - Add a normal tag with one line: `figure: Node = element("figure")`. No class, no registry.
 
 ## Escaping
 
-`render` escapes text children, attribute **names**, and attribute **values**. `RawHtml("...")` is the
-single escape hatch (rendered Markdown, inline `style()`). Never bypass it.
+`render` escapes text children, attribute **names**, and attribute **values**. `RawHtml("...")` is the single escape
+hatch (rendered Markdown, inline `style()`). Never bypass it.
 
 ## Markdown
 
-Optional extra `hint[markdown]` (`markdown-it-py`). The renderer is resolved **once** at import into a
-bound strategy — `RawHtml` when installed, a `<pre>` fallback when not — never a per-call check and never
-a `HAS_MARKDOWN` boolean. Parser runs with `html=False` (raw HTML in input is escaped) — safe on
-untrusted input.
+Optional extra `hint[markdown]` (`markdown-it-py`). The renderer is resolved **once** at import into a bound strategy —
+`RawHtml` when installed, a `<pre>` fallback when not — never a per-call check and never a `HAS_MARKDOWN` boolean.
+Parser runs with `html=False` (raw HTML in input is escaped) — safe on untrusted input.
 
 ## Tooling
 
 - Python **3.14** floor. `uv` (`uv sync --locked`). setuptools + `src/` layout. Ships `py.typed`.
 - `make check` runs the four gates: **ruff** (`select = ["ALL"]`, lint + format), **pyright** (strict),
   **import-linter**, **pytest + hypothesis**. Run it before every push.
-- Type checker is **pyright**, not mypy. A mypy compatibility gate is deferred to the PyPI milestone
-  (see `BACKLOG.md`).
+- Type checker is **pyright**, not mypy. A mypy compatibility gate is deferred to the PyPI milestone (see `BACKLOG.md`).
 - Tests are colocated as `src/hint/*_test.py` (`testpaths = ["src"]`).
 
 ### Lint suppressions (why they exist)
 
-- File-scoped `# ruff: noqa: A001` atop `__init__.py`: tag names `input`/`map`/`object` shadow builtins
-  by design; every use site is qualified (`hint.input`).
-- Global ignore of `TC001`/`TC002`/`TC003` in `pyproject.toml`: flake8-type-checking assumes stringized
-  annotations, but this project evaluates annotations at runtime (no `from __future__ import annotations`).
+- File-scoped `# ruff: noqa: A001` atop `__init__.py`: tag names `input`/`map`/`object` shadow builtins by design; every
+  use site is qualified (`hint.input`).
+- Global ignore of `TC001`/`TC002`/`TC003` in `pyproject.toml`: flake8-type-checking assumes stringized annotations, but
+  this project evaluates annotations at runtime (no `from __future__ import annotations`).
 - Per-site `# noqa: PLC0415` on the lazy `markdown_it` import — that lazy import is the point.
 
 ## Versioning & commits
 
 - Conventional commits. Scopes: `core`, `tags`, `markdown`, `render`, `build`, `ci`, `docs`, `deps`.
-- **release-please** drives versioning/changelog/releases from conventional commits (`fix:` → patch,
-  `feat:` → minor, `!` / `BREAKING CHANGE` → major). The `release-as` pin that forced the initial
-  `1.0.0` was removed once 1.0.0 shipped, so versions now bump normally from commit types.
-  Do **not** hand-edit `CHANGELOG.md` or the version — release-please regenerates them in its open
-  release PR. To get a doc/feature fix into the next release, land it on `main` and let that PR pick
-  it up; merge the release PR to cut the version.
-- Don't name an unreleased version by a guessed number (in docs, plans, or commit bodies) — say **"the
-  next version"** or **"an upcoming release"**. The number is release-please's to compute from the
-  commits, and guesses go stale: the async driver was planned as `1.1.0`, then a discovered API break
-  turned it into `2.0.0`.
+- **release-please** drives versioning/changelog/releases from conventional commits (`fix:` → patch, `feat:` → minor,
+  `!` / `BREAKING CHANGE` → major). The `release-as` pin that forced the initial `1.0.0` was removed once 1.0.0 shipped,
+  so versions now bump normally from commit types. Do **not** hand-edit `CHANGELOG.md` or the version — release-please
+  regenerates them in its open release PR. To get a doc/feature fix into the next release, land it on `main` and let
+  that PR pick it up; merge the release PR to cut the version.
+- Don't name an unreleased version by a guessed number (in docs, plans, or commit bodies) — say **"the next version"**
+  or **"an upcoming release"**. The number is release-please's to compute from the commits, and guesses go stale: the
+  async driver was planned as `1.1.0`, then a discovered API break turned it into `2.0.0`.
 
 ## Related
 
 - `~/Config/claude/html-rendering-pattern.md` — the broader server-rendered-HTML pattern `hint` serves.
-- `BACKLOG.md` — deferred, uncommitted future work. Streaming (`render_stream`, `render_stream_async`)
-  and the `document` node have since shipped; the near-term milestone is now **publishing `hint-html` to
-  PyPI** (which also adds the mypy compatibility gate).
+- `BACKLOG.md` — deferred, uncommitted future work. Streaming (`render_stream`, `render_stream_async`) and the
+  `document` node have since shipped; the near-term milestone is now **publishing `hint-html` to PyPI** (which also adds
+  the mypy compatibility gate).
