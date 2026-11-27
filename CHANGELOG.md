@@ -1,5 +1,23 @@
 # Changelog
 
+## [2.1.0](https://github.com/Odalrick/hint/compare/hint-html-v2.0.0...hint-html-v2.1.0) (2026-11-27)
+
+
+### Features
+
+* **tags:** add safe_a that refuses a non-web href ([#24](https://github.com/Odalrick/hint/issues/24)) ([66d6e95](https://github.com/Odalrick/hint/commit/66d6e95b006b0563cc9fc4aa6dfa7fec4eeaf301))
+
+
+### Bug Fixes
+
+* **core:** refuse tag and attribute names that break out of the tag ([#26](https://github.com/Odalrick/hint/issues/26)) ([afa2da5](https://github.com/Odalrick/hint/commit/afa2da5c457848cb222e5b6e7fbda9a6bb0687bb))
+
+
+### Documentation
+
+* backlog attribute names that break out of their attribute ([#25](https://github.com/Odalrick/hint/issues/25)) ([344aded](https://github.com/Odalrick/hint/commit/344aded7142bb3ea528c0f3fa61ec9655c49a6a5))
+* record three tables as evidence for a builder, not a request ([#22](https://github.com/Odalrick/hint/issues/22)) ([4d56bb4](https://github.com/Odalrick/hint/commit/4d56bb45e188efa55586e73ef478d6d6d78ac6f9))
+
 ## [2.0.0](https://github.com/Odalrick/hint/compare/hint-html-v1.0.0...hint-html-v2.0.0) (2026-07-16)
 
 
