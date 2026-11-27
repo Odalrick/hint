@@ -70,16 +70,3 @@ Not taken up there, deliberately. A table builder is easy and pleasant to write,
 before; that is exactly why it needs a justification beyond "it repeats" before it is written again. Recorded so the
 repetitions count towards one, should a fourth consumer or a real need — sorting, a column definition shared with a JSON
 view — turn up.
-
-## Attribute names can break out of their attribute
-
-`render` escapes an attribute name with `html.escape`, which leaves space, `=` and `/` alone — so a name is not confined
-to one attribute. `{"x href": "javascript:…"}` renders `<a x href="javascript:…">`, and `{"onclick=alert(1) x": "y"}`
-renders a working `onclick`. The documented promise is that `render` escapes attribute names; it only escapes their
-quoting.
-
-Names normally come from code, not data, so this bites only a caller who builds attribute names from input (`data-` keys
-from a record, say). Found while designing `safe_a`, whose `href` check it would otherwise sidestep. The fix is to
-refuse — not escape — a name outside HTML's attribute name grammar (no whitespace, `"`, `'`, `>`, `/`, `=`, or
-controls), since no escaping of a name is meaningful; whether refusing means raising at construction or at render is the
-open question.

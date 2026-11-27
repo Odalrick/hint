@@ -201,6 +201,11 @@ For Markdown, don't render it yourself and wrap the result in `RawHtml` — that
 for the built-in [`hint.markdown`](#markdown) (the optional `hint[markdown]` extra) instead: it escapes raw HTML in the
 input by default, so it stays safe on untrusted text, and returns `RawHtml` for you.
 
+Escaping cannot keep a name inside the tag, so tag and attribute names are also checked when the element is built. A
+name that could break out of the tag — empty, or containing whitespace, a quote, `<`, `>`, `/`, `=` or a control
+character — raises `ValueError`: a tag name when `hint.element` is called, an attribute name when the element is built.
+A tag name must also start with an ASCII letter.
+
 ### Links to stored addresses
 
 Escaping keeps an address inside its attribute, but `hint.a` still links to whatever it is given — a `javascript:`
@@ -238,7 +243,8 @@ There is nothing to register. If a tag is somehow missing, add one line:
 figure: hint.Node = hint.element("figure")
 ```
 
-`hint.element(name)` is the factory every constructor is built from; `hint.Node` is its type.
+`hint.element(name)` is the factory every constructor is built from; `hint.Node` is its type. A name that could break
+out of the tag raises `ValueError` on the spot.
 
 ## A note on currying
 

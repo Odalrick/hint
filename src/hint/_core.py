@@ -7,6 +7,7 @@ here (``from hint import Element, render``) — except sibling internal modules 
 from collections.abc import Callable, Generator
 from dataclasses import dataclass, field
 from html import escape
+from unicodedata import category
 
 
 @dataclass
@@ -59,10 +60,45 @@ type Node = Callable[[list[ElementOrStr], dict[str, str]], Element]
 type VoidNode = Callable[[dict[str, str]], Element]
 
 
+_NAME_BREAKERS = frozenset("\"'<>/=")
+
+
+def _is_sensible_name(name: str) -> bool:
+    """Whether ``name`` stays one name inside a tag: no character that would end it."""
+    return bool(name) and not any(
+        character.isspace()
+        or character in _NAME_BREAKERS
+        or category(character) == "Cc"
+        for character in name
+    )
+
+
+def _check_tag_name(name: str) -> None:
+    if not (_is_sensible_name(name) and name[0].isascii() and name[0].isalpha()):
+        message = f"invalid tag name {name!r}"
+        raise ValueError(message)
+
+
+def _check_attribute_names(tag: str, attrs: dict[str, str]) -> None:
+    for name in attrs:
+        if not _is_sensible_name(name):
+            message = f"invalid attribute name {name!r} on <{tag}>"
+            raise ValueError(message)
+
+
 def element(name: str) -> Node:
-    """Return a constructor for ``name`` elements: ``element("div")([...], {...})``."""
+    """Return a constructor for ``name`` elements: ``element("div")([...], {...})``.
+
+    Raises ``ValueError`` for a tag name — here — or an attribute name — when the
+    constructor is called — that could break out of the tag: empty, or containing
+    whitespace, a quote, ``<``, ``>``, ``/``, ``=`` or a control character. A tag name
+    must also start with an ASCII letter. Names come from code, so the error lands on
+    the line that wrote them; no escaping of a name would be meaningful.
+    """
+    _check_tag_name(name)
 
     def construct(content: list[ElementOrStr], attrs: dict[str, str]) -> Element:
+        _check_attribute_names(name, attrs)
         return Element(name=name, content=content, attrs=attrs)
 
     return construct
@@ -74,9 +110,12 @@ def void_element(name: str) -> VoidNode:
     Void elements have no children in HTML, so the constructor takes attributes only —
     there is no content parameter to pass (and none to silently drop). Not part of the
     public API: the package boundary imports it internally to build the void tags.
+    Refuses the same names as :func:`element`.
     """
+    _check_tag_name(name)
 
     def construct(attrs: dict[str, str]) -> Element:
+        _check_attribute_names(name, attrs)
         return Element(name=name, attrs=attrs)
 
     return construct
