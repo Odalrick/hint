@@ -46,12 +46,13 @@ in add-comply's CLAUDE.md.
 
 ## Escaping
 
-`render` escapes text children and attribute **values**. `RawHtml("...")` is the single escape hatch (rendered Markdown,
-inline `style()`). Never bypass it.
+`render` escapes text children, attribute **names**, and attribute **values**. `RawHtml("...")` is the single escape
+hatch (rendered Markdown, inline `style()`). Never bypass it.
 
-Tag and attribute **names** are checked, not escaped — no escaping of a name means anything. `element` and
+Escaping cannot keep a name inside the tag, so tag and attribute **names** are also checked when built. `element` and
 `void_element` raise `ValueError` for a name that could break out of the tag: the tag name when the factory is called
-(so a bad built-in tag fails `import hint`), attribute names when the constructor is.
+(so a bad built-in tag fails `import hint`), attribute names when the constructor is. The name escaping in `render`
+stays as the backstop for an `Element` built directly — it is not dead code.
 
 ## Markdown
 

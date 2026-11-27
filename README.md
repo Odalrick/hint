@@ -201,10 +201,10 @@ For Markdown, don't render it yourself and wrap the result in `RawHtml` — that
 for the built-in [`hint.markdown`](#markdown) (the optional `hint[markdown]` extra) instead: it escapes raw HTML in the
 input by default, so it stays safe on untrusted text, and returns `RawHtml` for you.
 
-Tag and attribute names are checked rather than escaped, since no escaping of a name means anything. A name that could
-break out of the tag — empty, or containing whitespace, a quote, `<`, `>`, `/`, `=` or a control character — raises
-`ValueError`: a tag name when `hint.element` is called, an attribute name when the element is built. A tag name must
-also start with an ASCII letter.
+Escaping cannot keep a name inside the tag, so tag and attribute names are also checked when the element is built. A
+name that could break out of the tag — empty, or containing whitespace, a quote, `<`, `>`, `/`, `=` or a control
+character — raises `ValueError`: a tag name when `hint.element` is called, an attribute name when the element is built.
+A tag name must also start with an ASCII letter.
 
 ### Links to stored addresses
 
