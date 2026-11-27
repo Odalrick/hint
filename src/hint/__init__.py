@@ -31,7 +31,7 @@ from hint._core import (
     style as style,
     void_element as _void_element,
 )
-from hint._helper import render as render
+from hint._helper import render as render, safe_a as safe_a
 from hint._markdown import markdown as markdown
 
 # The HTML Living Standard element vocabulary, one constructor per tag, by category.
